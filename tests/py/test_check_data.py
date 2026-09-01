@@ -120,6 +120,15 @@ class DependencyTest(unittest.TestCase):
         deps = {'edges': [{'from': 'iron-man', 'to': 'loki-s1', 'note': ''}]}
         self.assertTrue(any('note' in e for e in check_data.check_dependencies(sample(), deps)))
 
+    def test_self_loop_detected(self):
+        self.assertEqual(check_data.find_cycle({'a': ['a']}), ['a', 'a'])
+
+    def test_cycle_in_disconnected_component(self):
+        result = check_data.find_cycle({'a': ['b'], 'b': [], 'c': ['d'], 'd': ['c']})
+        self.assertEqual(result, ['c', 'd', 'c'])
+        result_no_cycle = check_data.find_cycle({'a': ['b'], 'c': ['d']})
+        self.assertIsNone(result_no_cycle)
+
     def test_real_data(self):
         data = check_data.load(check_data.WORKS_PATH)
         deps = check_data.load(check_data.DEPS_PATH)
@@ -137,6 +146,10 @@ class GuideTest(unittest.TestCase):
     def test_unknown_item(self):
         guides = {'prep': [{'target': 'loki-s1', 'items': [{'id': 'nope', 'note': 'x'}]}]}
         self.assertTrue(any('nope' in e for e in check_data.check_guides(sample(), guides)))
+
+    def test_empty_note(self):
+        guides = {'prep': [{'target': 'loki-s1', 'items': [{'id': 'iron-man', 'note': ''}]}]}
+        self.assertTrue(any('note' in e for e in check_data.check_guides(sample(), guides)))
 
 
 class RealDataTest(unittest.TestCase):
