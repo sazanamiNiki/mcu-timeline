@@ -1,0 +1,11 @@
+{
+  "name": "mcu-catalog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/js/*.test.js",
+    "test:py": "python3 -m unittest discover -s tests/py -p 'test_*.py'",
+    "check": "python3 scripts/check_data.py",
+    "serve": "python3 -m http.server 8000"
+  }
+}
