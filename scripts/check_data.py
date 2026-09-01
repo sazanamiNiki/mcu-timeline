@@ -57,8 +57,31 @@ def check_unique_ids(data):
     return errors
 
 
+def check_metadata(data):
+    errors = []
+    works = included(data)
+    orders = []
+    for w in works:
+        order = w.get('timeline_order')
+        if isinstance(order, int):
+            orders.append(order)
+        else:
+            errors.append(f"{w['id']}: timeline_order が整数でない")
+        if not w.get('story_year'):
+            errors.append(f"{w['id']}: story_year が空")
+        if w.get('lane') not in LANES:
+            errors.append(f"{w['id']}: lane が不正 ({w.get('lane')})")
+        if not isinstance(w.get('essential'), bool):
+            errors.append(f"{w['id']}: essential が真偽値でない")
+        if len(w.get('summary_ja', '')) > SUMMARY_MAX:
+            errors.append(f"{w['id']}: summary_ja が {SUMMARY_MAX} 字を超える ({len(w['summary_ja'])} 字)")
+    if sorted(orders) != list(range(1, len(works) + 1)):
+        errors.append('timeline_order が 1..N の連番になっていない')
+    return errors
+
+
 def check_all(data, deps=None, guides=None):
-    return check_required(data) + check_unique_ids(data)
+    return check_required(data) + check_unique_ids(data) + check_metadata(data)
 
 
 def main():

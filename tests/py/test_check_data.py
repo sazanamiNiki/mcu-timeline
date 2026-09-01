@@ -59,6 +59,41 @@ class UniqueTest(unittest.TestCase):
         self.assertIn('iron-man', errs[0])
 
 
+class MetadataTest(unittest.TestCase):
+    def enriched(self):
+        d = sample()
+        d['films'][0].update(timeline_order=1, story_year='2008', lane='iron', essential=True)
+        d['series'][0].update(timeline_order=2, story_year='時間外（TVA）', lane='thor', essential=False)
+        return d
+
+    def test_ok(self):
+        self.assertEqual(check_data.check_metadata(self.enriched()), [])
+
+    def test_order_must_be_contiguous(self):
+        d = self.enriched()
+        d['series'][0]['timeline_order'] = 3
+        self.assertTrue(any('連番' in e for e in check_data.check_metadata(d)))
+
+    def test_lane_must_be_known(self):
+        d = self.enriched()
+        d['films'][0]['lane'] = 'xmen'
+        self.assertTrue(any('lane' in e for e in check_data.check_metadata(d)))
+
+    def test_essential_must_be_bool(self):
+        d = self.enriched()
+        d['films'][0]['essential'] = 'yes'
+        self.assertTrue(any('essential' in e for e in check_data.check_metadata(d)))
+
+    def test_summary_length(self):
+        d = self.enriched()
+        d['films'][0]['summary_ja'] = 'あ' * 46
+        self.assertTrue(any('summary_ja' in e for e in check_data.check_metadata(d)))
+
+    def test_real_data(self):
+        data = check_data.load(check_data.WORKS_PATH)
+        self.assertEqual(check_data.check_metadata(data), [])
+
+
 class RealDataTest(unittest.TestCase):
     def test_real_data_passes(self):
         data = check_data.load(check_data.WORKS_PATH)
