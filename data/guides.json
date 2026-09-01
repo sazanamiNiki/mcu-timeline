@@ -1,0 +1,28 @@
+{
+  "prep": [
+    {
+      "target": "visionquest",
+      "items": [
+        {"id": "avengers-age-of-ultron", "note": "ヴィジョンの誕生とウルトロン"},
+        {"id": "captain-america-civil-war", "note": "ヴィジョンとワンダの関係"},
+        {"id": "avengers-infinity-war", "note": "ヴィジョンの死"},
+        {"id": "wandavision", "note": "ホワイトヴィジョンの誕生"},
+        {"id": "agatha-all-along", "note": "三部作の2作目"}
+      ]
+    },
+    {
+      "target": "avengers-doomsday",
+      "items": [
+        {"id": "doctor-strange-multiverse-of-madness", "note": "マルチバースの衝突"},
+        {"id": "thor-love-and-thunder", "note": "ソーの現状"},
+        {"id": "black-panther-wakanda-forever", "note": "ワカンダとネイモア"},
+        {"id": "loki-s2", "note": "時間線とロキの役割"},
+        {"id": "deadpool-and-wolverine", "note": "X-MENとマルチバース"},
+        {"id": "captain-america-brave-new-world", "note": "新キャプテン・アメリカ"},
+        {"id": "thunderbolts", "note": "ニュー・アベンジャーズの結成"},
+        {"id": "the-fantastic-four-first-steps", "note": "ドクター・ドゥームの初登場"},
+        {"id": "spider-man-brand-new-day", "note": "直前の物語"}
+      ]
+    }
+  ]
+}

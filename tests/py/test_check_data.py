@@ -94,6 +94,51 @@ class MetadataTest(unittest.TestCase):
         self.assertEqual(check_data.check_metadata(data), [])
 
 
+class DependencyTest(unittest.TestCase):
+    def test_cycle_detected(self):
+        self.assertEqual(check_data.find_cycle({'a': ['b'], 'b': ['a']}), ['a', 'b', 'a'])
+
+    def test_no_cycle(self):
+        self.assertIsNone(check_data.find_cycle({'a': ['b'], 'b': ['c']}))
+
+    def test_unknown_id(self):
+        deps = {'edges': [{'from': 'iron-man', 'to': 'nope', 'note': 'x'}]}
+        errs = check_data.check_dependencies(sample(), deps)
+        self.assertTrue(any('nope' in e for e in errs))
+
+    def test_duplicate_and_self(self):
+        deps = {'edges': [
+            {'from': 'iron-man', 'to': 'loki-s1', 'note': 'x'},
+            {'from': 'iron-man', 'to': 'loki-s1', 'note': 'x'},
+            {'from': 'loki-s1', 'to': 'loki-s1', 'note': 'x'},
+        ]}
+        errs = check_data.check_dependencies(sample(), deps)
+        self.assertTrue(any('重複' in e for e in errs))
+        self.assertTrue(any('自己参照' in e for e in errs))
+
+    def test_empty_note(self):
+        deps = {'edges': [{'from': 'iron-man', 'to': 'loki-s1', 'note': ''}]}
+        self.assertTrue(any('note' in e for e in check_data.check_dependencies(sample(), deps)))
+
+    def test_real_data(self):
+        data = check_data.load(check_data.WORKS_PATH)
+        deps = check_data.load(check_data.DEPS_PATH)
+        guides = check_data.load(check_data.GUIDES_PATH)
+        self.assertEqual(check_data.check_dependencies(data, deps), [])
+        self.assertEqual(check_data.check_guides(data, guides), [])
+        self.assertEqual(len(deps['edges']), 104)
+
+
+class GuideTest(unittest.TestCase):
+    def test_unknown_target(self):
+        guides = {'prep': [{'target': 'nope', 'items': [{'id': 'iron-man', 'note': 'x'}]}]}
+        self.assertTrue(any('nope' in e for e in check_data.check_guides(sample(), guides)))
+
+    def test_unknown_item(self):
+        guides = {'prep': [{'target': 'loki-s1', 'items': [{'id': 'nope', 'note': 'x'}]}]}
+        self.assertTrue(any('nope' in e for e in check_data.check_guides(sample(), guides)))
+
+
 class RealDataTest(unittest.TestCase):
     def test_real_data_passes(self):
         data = check_data.load(check_data.WORKS_PATH)

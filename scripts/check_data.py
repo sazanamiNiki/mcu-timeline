@@ -80,8 +80,82 @@ def check_metadata(data):
     return errors
 
 
+def find_cycle(graph):
+    """有向グラフの循環を1つ返す（例: ['a', 'b', 'a']）。なければ None。"""
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color = {}
+    stack = []
+
+    def visit(node):
+        color[node] = GRAY
+        stack.append(node)
+        for nxt in graph.get(node, []):
+            state = color.get(nxt, WHITE)
+            if state == GRAY:
+                return stack[stack.index(nxt):] + [nxt]
+            if state == WHITE:
+                found = visit(nxt)
+                if found:
+                    return found
+        stack.pop()
+        color[node] = BLACK
+        return None
+
+    for node in list(graph):
+        if color.get(node, WHITE) == WHITE:
+            found = visit(node)
+            if found:
+                return found
+    return None
+
+
+def check_dependencies(data, deps):
+    errors = []
+    ids = {w['id'] for w in included(data)}
+    seen = set()
+    graph = {}
+    for e in deps['edges']:
+        a, b = e.get('from'), e.get('to')
+        if a not in ids:
+            errors.append(f"dependencies: from が未収録 ({a})")
+        if b not in ids:
+            errors.append(f"dependencies: to が未収録 ({b})")
+        if a == b:
+            errors.append(f"dependencies: 自己参照 ({a})")
+        if (a, b) in seen:
+            errors.append(f"dependencies: 重複 ({a} -> {b})")
+        seen.add((a, b))
+        if not e.get('note'):
+            errors.append(f"dependencies: note が空 ({a} -> {b})")
+        graph.setdefault(a, []).append(b)
+    cycle = find_cycle(graph)
+    if cycle:
+        errors.append('dependencies: 循環 ' + ' -> '.join(cycle))
+    return errors
+
+
+def check_guides(data, guides):
+    errors = []
+    ids = {w['id'] for w in included(data)}
+    for g in guides['prep']:
+        target = g.get('target')
+        if target not in ids:
+            errors.append(f"guides: target が未収録 ({target})")
+        for item in g.get('items', []):
+            if item.get('id') not in ids:
+                errors.append(f"guides/{target}: id が未収録 ({item.get('id')})")
+            if not item.get('note'):
+                errors.append(f"guides/{target}: note が空 ({item.get('id')})")
+    return errors
+
+
 def check_all(data, deps=None, guides=None):
-    return check_required(data) + check_unique_ids(data) + check_metadata(data)
+    errors = check_required(data) + check_unique_ids(data) + check_metadata(data)
+    if deps is not None:
+        errors += check_dependencies(data, deps)
+    if guides is not None:
+        errors += check_guides(data, guides)
+    return errors
 
 
 def main():
