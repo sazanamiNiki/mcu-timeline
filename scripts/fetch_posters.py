@@ -83,6 +83,17 @@ def fetch_by_id(work, api_key, get_json=http_get_json):
     return work['tmdb_id'], None
 
 
+def resolve_work(work, api_key, get_json=http_get_json):
+    """1作品分の取得。通信や解析の失敗は None にして、残りの作品の処理を続ける。"""
+    try:
+        if work.get('tmdb_id'):
+            return fetch_by_id(work, api_key, get_json)
+        return resolve(work, api_key, get_json)
+    except (OSError, ValueError) as err:
+        print(f"{work['id']}: 取得に失敗 ({err})", file=sys.stderr)
+        return None
+
+
 def included(data):
     return list(data['films']) + [s for s in data['series'] if s.get('canon') == 'main' and s.get('type') in INCLUDED_SERIES_TYPES]
 
@@ -97,7 +108,7 @@ def main():
     for work in included(data):
         if work.get('poster_path'):
             continue
-        found = fetch_by_id(work, api_key) if work.get('tmdb_id') else resolve(work, api_key)
+        found = resolve_work(work, api_key)
         if found is None:
             unresolved.append(work['id'])
             continue

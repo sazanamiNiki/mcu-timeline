@@ -1,3 +1,5 @@
+import contextlib
+import io
 import pathlib
 import sys
 import unittest
@@ -100,6 +102,50 @@ class FetchByIdTest(unittest.TestCase):
         self.assertEqual(fetch_posters.fetch_by_id(work, 'K', fake), (1726, None))
         self.assertIn('/movie/1726?', calls[0])
         self.assertEqual(len(calls), 2)
+
+    def test_uses_movie_endpoint_for_special(self):
+        calls = []
+
+        def fake(url):
+            calls.append(url)
+            return {'poster_path': '/s.jpg'}
+
+        work = {'id': 'werewolf-by-night', 'tmdb_id': 1006462, 'type': 'special', 'premiere_us': '2022-10-07', 'season': None}
+        self.assertEqual(fetch_posters.fetch_by_id(work, 'K', fake), (1006462, '/s.jpg'))
+        self.assertIn('/movie/1006462?', calls[0])
+
+
+class ResolveWorkTest(unittest.TestCase):
+    def test_network_error_returns_none_and_reports(self):
+        def boom(url):
+            raise OSError('timed out')
+
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            self.assertIsNone(fetch_posters.resolve_work(FILM, 'K', boom))
+        self.assertIn('取得に失敗', err.getvalue())
+
+    def test_invalid_json_returns_none(self):
+        def bad(url):
+            raise ValueError('Expecting value')
+
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertIsNone(fetch_posters.resolve_work(FILM, 'K', bad))
+
+    def test_uses_fetch_by_id_when_tmdb_id_present(self):
+        calls = []
+
+        def fake(url):
+            calls.append(url)
+            return {'poster_path': '/p.jpg'}
+
+        self.assertEqual(fetch_posters.resolve_work(dict(FILM, tmdb_id=1726), 'K', fake), (1726, '/p.jpg'))
+        self.assertIn('/movie/1726?', calls[0])
+
+    def test_falls_back_to_search_without_tmdb_id(self):
+        def fake(url):
+            return {'results': [{'id': 1726, 'poster_path': '/ja.jpg'}]}
+
+        self.assertEqual(fetch_posters.resolve_work(FILM, 'K', fake), (1726, '/ja.jpg'))
 
 
 if __name__ == '__main__':
