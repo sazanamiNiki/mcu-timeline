@@ -1,5 +1,5 @@
 import { NODE_W, NODE_H, layoutGraph, ancestorsOf, edgePath } from './graph-layout.js';
-import { displayTitle, posterUrl, matchesQuery } from './data.js';
+import { displayTitle, posterUrl, matchesQuery, dateLabel, KIND_LABELS, phaseLabel } from './data.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DEFAULT_VIEW_W = 1600;
@@ -18,6 +18,13 @@ function svgEl(name, attrs = {}, text) {
   return node;
 }
 
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
 function button(label, title) {
   const b = document.createElement('button');
   b.type = 'button';
@@ -26,7 +33,7 @@ function button(label, title) {
   return b;
 }
 
-const HINT = '作品を押すと、先に観る作品が強調されます。ドラッグで移動、ホイールで拡大縮小。';
+const HINT = '作品を押すと概要と、先に観る作品の強調を表示します。ドラッグで移動、ピンチかボタンで拡大縮小。';
 
 export function createGraph(container, works, edges) {
   const layout = layoutGraph(works, edges);
@@ -42,6 +49,10 @@ export function createGraph(container, works, edges) {
   info.className = 'graph__info';
   info.textContent = HINT;
   toolbar.append(zoomOut, zoomIn, reset, info);
+
+  const detail = document.createElement('div');
+  detail.className = 'graph__detail';
+  detail.hidden = true;
 
   const svg = svgEl('svg', { class: 'graph__svg', role: 'group', 'aria-label': 'MCU作品の依存関係図' });
   const defs = svgEl('defs');
@@ -88,7 +99,7 @@ export function createGraph(container, works, edges) {
     nodeEls.set(node.id, g);
   }
   svg.append(defs, laneLayer, edgeLayer, nodeLayer);
-  container.append(toolbar, svg);
+  container.append(toolbar, detail, svg);
 
   // 表示範囲（viewBox）でパンとズームを表す
   const view = { x: 0, y: 0, w: Math.min(layout.width, DEFAULT_VIEW_W), h: 0 };
@@ -105,12 +116,32 @@ export function createGraph(container, works, edges) {
     view.h = h;
     applyView();
   }
-  function toSvgPoint(event) {
+  function toSvgPointXY(clientX, clientY) {
     const rect = svg.getBoundingClientRect();
     return {
-      x: view.x + ((event.clientX - rect.left) / rect.width) * view.w,
-      y: view.y + ((event.clientY - rect.top) / rect.height) * view.h,
+      x: view.x + ((clientX - rect.left) / rect.width) * view.w,
+      y: view.y + ((clientY - rect.top) / rect.height) * view.h,
     };
+  }
+
+  /** クリックした作品の概要パネル。id が null なら閉じる。 */
+  function renderDetail(id, ancestorCount) {
+    detail.replaceChildren();
+    if (!id) {
+      detail.hidden = true;
+      return;
+    }
+    const work = byId.get(id);
+    const meta = `${KIND_LABELS[work.kind]} · ${phaseLabel(work.phase)}${work.upcoming ? ' · 公開予定' : ''}`;
+    detail.append(
+      el('p', 'graph__detail-title', displayTitle(work)),
+      el('p', 'graph__detail-en', work.titleEn),
+      el('p', 'graph__detail-meta', meta),
+      el('p', 'graph__detail-dates', `日本 ${dateLabel(work.dateJp, work.upcoming)} / 米国 ${dateLabel(work.dateUs, work.upcoming)}`),
+      el('p', 'graph__detail-summary', work.summary),
+      el('p', 'graph__detail-deps', ancestorCount > 0 ? `先に観る作品 ${ancestorCount} 本を図の中で強調しています` : '先に観る作品はありません'),
+    );
+    detail.hidden = false;
   }
 
   let focused = null;
@@ -127,7 +158,7 @@ export function createGraph(container, works, edges) {
       path.classList.toggle('is-ancestor', on);
       path.classList.toggle('is-muted', Boolean(set) && !on);
     }
-    info.textContent = id ? `${displayTitle(byId.get(id))}: 先に観る作品 ${set.size} 本を強調しています` : HINT;
+    renderDetail(id, set ? set.size : 0);
   }
 
   function setQuery(query) {
@@ -145,25 +176,57 @@ export function createGraph(container, works, edges) {
     applyView();
     highlight(null);
   });
+
+  // ホイール単体では反応しない（ページのスクロールに任せる）。
+  // トラックパッドのピンチはブラウザが ctrlKey つきの wheel として届けるので、それだけズームに使う。
   svg.addEventListener('wheel', (event) => {
+    if (!event.ctrlKey) return;
     event.preventDefault();
-    const p = toSvgPoint(event);
+    const p = toSvgPointXY(event.clientX, event.clientY);
     zoomBy(event.deltaY > 0 ? 1.1 : 0.9, p.x, p.y);
   }, { passive: false });
 
+  // 1本指: パンとクリック。2本指: ピンチでズーム。
+  const pointers = new Map();
   let drag = null;
+  let pinch = null;
+  let pinched = false;
+
+  function pinchInfo() {
+    const [a, b] = [...pointers.values()];
+    return { dist: Math.hypot(a.x - b.x, a.y - b.y), cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 };
+  }
+
   svg.addEventListener('pointerdown', (event) => {
-    drag = {
-      x: event.clientX,
-      y: event.clientY,
-      vx: view.x,
-      vy: view.y,
-      moved: false,
-      node: event.target.closest('.graph__node'),
-    };
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     svg.setPointerCapture(event.pointerId);
+    if (pointers.size === 2) {
+      drag = null;
+      pinch = pinchInfo();
+      pinched = true;
+    } else if (pointers.size === 1 && !pinched) {
+      drag = {
+        x: event.clientX,
+        y: event.clientY,
+        vx: view.x,
+        vy: view.y,
+        moved: false,
+        node: event.target.closest('.graph__node'),
+      };
+    }
   });
   svg.addEventListener('pointermove', (event) => {
+    if (!pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pinch && pointers.size === 2) {
+      const now = pinchInfo();
+      if (pinch.dist > 0 && now.dist > 0) {
+        const p = toSvgPointXY(now.cx, now.cy);
+        zoomBy(pinch.dist / now.dist, p.x, p.y);
+      }
+      pinch = now;
+      return;
+    }
     if (!drag) return;
     const scale = view.w / svg.getBoundingClientRect().width;
     const dx = (event.clientX - drag.x) * scale;
@@ -173,15 +236,22 @@ export function createGraph(container, works, edges) {
     view.y = drag.vy - dy;
     applyView();
   });
-  svg.addEventListener('pointerup', () => {
+  function endPointer(event, cancelled) {
+    pointers.delete(event.pointerId);
+    if (pointers.size < 2) pinch = null;
+    if (pinched) {
+      drag = null;
+      if (pointers.size === 0) pinched = false;
+      return;
+    }
     const { moved, node } = drag ?? {};
     drag = null;
-    if (moved) return;
+    if (cancelled || moved) return;
     highlight(node ? node.dataset.id : null);
-  });
-  svg.addEventListener('pointercancel', () => {
-    drag = null;
-  });
+  }
+  svg.addEventListener('pointerup', (event) => endPointer(event, false));
+  svg.addEventListener('pointercancel', (event) => endPointer(event, true));
+
   svg.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') highlight(null);
     if ((event.key === 'Enter' || event.key === ' ') && event.target.classList.contains('graph__node')) {

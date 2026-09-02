@@ -166,3 +166,18 @@ main { padding: 16px 20px 40px; }
   .graph__svg { aspect-ratio: 4 / 3; }
   .guide__map { height: 360px; }
 }
+
+/* 依存関係図: 概要パネル */
+.graph__detail {
+  display: flex; flex-wrap: wrap; gap: 2px 16px; align-items: baseline;
+  margin-bottom: 8px; padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border); border-left: 4px solid var(--accent);
+  border-radius: 8px;
+}
+.graph__detail-title { margin: 0; font-size: 1rem; font-weight: 600; }
+.graph__detail-en { margin: 0; font-size: 0.78rem; color: var(--muted); }
+.graph__detail-meta { margin: 0; font-size: 0.8rem; color: var(--muted); }
+.graph__detail-dates { margin: 0; font-size: 0.8rem; }
+.graph__detail-summary { margin: 4px 0 0; font-size: 0.85rem; flex-basis: 100%; }
+.graph__detail-deps { margin: 2px 0 0; font-size: 0.78rem; color: var(--muted); flex-basis: 100%; }
