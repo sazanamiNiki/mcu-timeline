@@ -61,7 +61,7 @@ export function renderCard(work, { store, onChange, compact = false, thumb = fal
 
   const body = el('div', 'card__body');
   if (thumb) {
-    body.append(el('h3', 'card__title', displayTitle(work)));
+    card.title = displayTitle(work);
   } else {
     const meta = `${KIND_LABELS[work.kind]} · ${phaseLabel(work.phase)}${work.upcoming ? ' · 公開予定' : ''}`;
     body.append(
