@@ -1,11 +1,21 @@
 import { renderCard } from './card.js';
-import { displayTitle, formatDate, sortByRelease } from './data.js';
+import { displayTitle, formatDate, phaseLabel, posterUrl, sortByRelease } from './data.js';
 
 /** 予習リストの id を作品に解決する。未収録の id は捨てる。 */
 export function prepEntries(guide, byId) {
   return guide.items
     .map((item) => ({ work: byId.get(item.id), note: item.note }))
     .filter((entry) => entry.work);
+}
+
+/** essential な作品をフェーズごとに公開順でまとめる。 */
+export function phaseGroups(works) {
+  const groups = new Map();
+  for (const work of sortByRelease(works.filter((w) => w.essential))) {
+    if (!groups.has(work.phase)) groups.set(work.phase, []);
+    groups.get(work.phase).push(work);
+  }
+  return [...groups.keys()].sort((a, b) => a - b).map((phase) => ({ phase, works: groups.get(phase) }));
 }
 
 function el(tag, className, text) {
@@ -21,25 +31,58 @@ function section(title, lead, ...children) {
   return sec;
 }
 
-function orderedList(entries, store) {
-  const ol = el('ol', 'guide__list');
+/** 飾りのポスター帯。画像が1枚もなければ null。 */
+function heroBand(works) {
+  const band = el('div', 'guide__hero');
+  band.setAttribute('aria-hidden', 'true');
+  for (const work of works) {
+    const url = posterUrl(work);
+    if (!url) continue;
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = '';
+    img.loading = 'lazy';
+    band.append(img);
+  }
+  return band.childElementCount ? band : null;
+}
+
+/** サムネの横スクロール列。note があればサムネの下に添える。 */
+function thumbStrip(entries, store) {
+  const ol = el('ol', 'strip guide__strip');
   for (const { work, note } of entries) {
-    const li = el('li', 'guide__item');
-    li.append(renderCard(work, { store, compact: true, tapToggle: true }));
+    const li = el('li', 'guide__thumb');
+    li.append(renderCard(work, { store, thumb: true, tapToggle: true }));
     if (note) li.append(el('p', 'guide__note', note));
     ol.append(li);
   }
   return ol;
 }
 
+function routeRows(groups, store) {
+  return groups.map(({ phase, works }) => {
+    const row = el('div', 'guide__row');
+    row.append(
+      el('h3', 'guide__phase', phaseLabel(phase)),
+      thumbStrip(works.map((work) => ({ work })), store),
+    );
+    return row;
+  });
+}
+
 export function renderGuide(container, works, guides, { store }) {
   const byId = new Map(works.map((w) => [w.id, w]));
   container.classList.add('guide');
 
-  const essential = sortByRelease(works.filter((w) => w.essential)).map((work) => ({ work }));
-  const sections = [
-    section('短縮ルート', '大作につながる主要作を公開順に並べたルートです。', orderedList(essential, store)),
-  ];
+  const groups = phaseGroups(works);
+  const sections = [];
+  const hero = heroBand(groups.flatMap((g) => g.works));
+  if (hero) sections.push(hero);
+  sections.push(section(
+    '短縮ルート',
+    '大作につながる主要作を、フェーズごとに公開順で並べたルートです。',
+    ...routeRows(groups, store),
+  ));
 
   for (const guide of guides.prep) {
     const target = byId.get(guide.target);
@@ -67,7 +110,7 @@ export function renderGuide(container, works, guides, { store }) {
     sections.push(section(
       `『${displayTitle(target)}』の予習`,
       `${formatDate(target.dateUs) ?? '公開日未定'} 公開。先に観ておく作品と理由です。`,
-      orderedList(prepEntries(guide, byId), store),
+      thumbStrip(prepEntries(guide, byId), store),
       el('h3', 'guide__subtitle', '予習マップ'),
       frame,
     ));

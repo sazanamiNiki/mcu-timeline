@@ -51,22 +51,26 @@ function watchedToggle(work, store, onChange, card) {
   return label;
 }
 
-/** 作品カードを返す。compact は横長表示、tapToggle はカード全体のタップで視聴済みを切り替える。 */
-export function renderCard(work, { store, onChange, compact = false, tapToggle = false, withSummary = !compact } = {}) {
-  const card = el('article', compact ? 'card card--compact' : 'card');
+/** 作品カードを返す。compact は横長、thumb はポスター＋タイトルのみの小型、tapToggle はカード全体のタップで視聴済みを切り替える。 */
+export function renderCard(work, { store, onChange, compact = false, thumb = false, tapToggle = false, withSummary = !compact && !thumb } = {}) {
+  const card = el('article', `card${thumb ? ' card--thumb' : compact ? ' card--compact' : ''}`);
   card.dataset.id = work.id;
   card.dataset.phase = String(work.phase);
   if (work.upcoming) card.classList.add('card--upcoming');
   if (work.essential) card.classList.add('card--essential');
 
   const body = el('div', 'card__body');
-  const meta = `${KIND_LABELS[work.kind]} · ${phaseLabel(work.phase)}${work.upcoming ? ' · 公開予定' : ''}`;
-  body.append(
-    el('p', 'card__meta', meta),
-    el('h3', 'card__title', displayTitle(work)),
-    el('p', 'card__title-en', work.titleEn),
-    el('p', 'card__dates', `日本 ${dateLabel(work.dateJp, work.upcoming)} / 米国 ${dateLabel(work.dateUs, work.upcoming)}`),
-  );
+  if (thumb) {
+    body.append(el('h3', 'card__title', displayTitle(work)));
+  } else {
+    const meta = `${KIND_LABELS[work.kind]} · ${phaseLabel(work.phase)}${work.upcoming ? ' · 公開予定' : ''}`;
+    body.append(
+      el('p', 'card__meta', meta),
+      el('h3', 'card__title', displayTitle(work)),
+      el('p', 'card__title-en', work.titleEn),
+      el('p', 'card__dates', `日本 ${dateLabel(work.dateJp, work.upcoming)} / 米国 ${dateLabel(work.dateUs, work.upcoming)}`),
+    );
+  }
   if (withSummary) body.append(el('p', 'card__summary', work.summary));
   body.append(watchedToggle(work, store, onChange, card));
 
