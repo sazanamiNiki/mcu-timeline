@@ -54,7 +54,7 @@ async function init() {
 
   const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store });
   const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store });
-  const graph = createGraph(document.getElementById('view-graph'), works, deps.edges);
+  const graph = createGraph(document.getElementById('view-graph'), works, deps.edges, { store });
   renderGuide(document.getElementById('view-guide'), works, guides, { store });
 
   // 視聴済みの変更を、他のビューの同じ作品カードにも反映する
@@ -71,6 +71,7 @@ async function init() {
       if (otherLabel) otherLabel.classList.toggle('is-watched', watched);
       other.classList.toggle('card--watched', watched);
     }
+    graph.setWatched(card.dataset.id, watched);
   });
 
   const search = document.getElementById('search');

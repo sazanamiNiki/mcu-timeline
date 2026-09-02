@@ -144,6 +144,10 @@ main { padding: 16px 20px 40px; }
 .graph__node.is-match .graph__node-frame { stroke: var(--text); stroke-width: 3; stroke-dasharray: 6 4; }
 .graph__node.is-muted { opacity: 0.2; }
 .graph__label { fill: var(--text); font-size: 12px; }
+.graph__watched { display: none; }
+.graph__node.is-watched .graph__watched { display: block; }
+.graph__watched-bg { fill: var(--watched); stroke: var(--bg); stroke-width: 1.5; }
+.graph__watched-check { fill: none; stroke: var(--bg); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ガイド */
 .guide__section { margin-bottom: 36px; }

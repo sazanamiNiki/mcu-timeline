@@ -35,7 +35,7 @@ function button(label, title) {
 
 const HINT = '作品を押すと概要と、先に観る作品の強調を表示します。ドラッグで移動、ピンチかボタンで拡大縮小。';
 
-export function createGraph(container, works, edges) {
+export function createGraph(container, works, edges, { store } = {}) {
   const layout = layoutGraph(works, edges);
   const byId = new Map(works.map((w) => [w.id, w]));
   container.classList.add('graph');
@@ -93,6 +93,11 @@ export function createGraph(container, works, edges) {
     if (url) g.append(svgEl('image', { href: url, width: NODE_W, height: NODE_H, preserveAspectRatio: 'xMidYMid slice' }));
     else g.append(svgEl('text', { x: NODE_W / 2, y: NODE_H / 2, 'text-anchor': 'middle', class: 'graph__node-initial' }, displayTitle(node.work).slice(0, 2)));
     g.append(svgEl('rect', { width: NODE_W, height: NODE_H, rx: 6, class: 'graph__node-frame' }));
+    const badge = svgEl('g', { class: 'graph__watched', transform: `translate(${NODE_W - 8} -4)` });
+    badge.append(svgEl('circle', { r: 9, class: 'graph__watched-bg' }));
+    badge.append(svgEl('path', { d: 'M -4 0 L -1 3 L 4 -3', class: 'graph__watched-check' }));
+    g.append(badge);
+    g.classList.toggle('is-watched', Boolean(store && store.available && store.has(node.id)));
     g.append(svgEl('text', { x: NODE_W / 2, y: NODE_H + 16, 'text-anchor': 'middle', class: 'graph__label' }, shortLabel(node.work)));
     g.append(svgEl('title', {}, `${displayTitle(node.work)}（${node.work.dateUs ?? '公開日未定'}）`));
     nodeLayer.append(g);
@@ -264,6 +269,9 @@ export function createGraph(container, works, edges) {
   return {
     highlight,
     setQuery,
+    setWatched(id, watched) {
+      nodeEls.get(id)?.classList.toggle('is-watched', watched);
+    },
     get focused() {
       return focused;
     },
