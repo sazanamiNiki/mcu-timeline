@@ -56,6 +56,22 @@ async function init() {
   const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store });
   const graph = createGraph(document.getElementById('view-graph'), works, deps.edges);
   renderGuide(document.getElementById('view-guide'), works, guides, { store });
+
+  // 視聴済みの変更を、他のビューの同じ作品カードにも反映する
+  document.addEventListener('change', (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || !input.closest('.card__watched')) return;
+    const card = input.closest('.card');
+    if (!card) return;
+    const watched = store.has(card.dataset.id);
+    for (const other of document.querySelectorAll(`.card[data-id="${CSS.escape(card.dataset.id)}"]`)) {
+      const otherInput = other.querySelector('.card__watched input');
+      const otherLabel = other.querySelector('.card__watched');
+      if (otherInput) otherInput.checked = watched;
+      if (otherLabel) otherLabel.classList.toggle('is-watched', watched);
+    }
+  });
+
   const search = document.getElementById('search');
   search.addEventListener('input', () => {
     release.setQuery(search.value);

@@ -151,3 +151,18 @@ main { padding: 16px 20px 40px; }
 .guide__item { padding-left: 4px; }
 .guide__note { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
 .guide__map { width: 100%; height: 560px; border: 1px solid var(--border); border-radius: 8px; background: #000; }
+
+/* スマホ */
+@media (max-width: 600px) {
+  :root { --card-w: 150px; }
+  .site-header { padding: 10px 12px; gap: 8px 12px; }
+  .search { flex: 1 1 100%; }
+  .search input { width: 100%; }
+  .tabs { margin-left: 0; width: 100%; justify-content: space-between; }
+  .tabs a { padding: 6px 8px; font-size: 0.9rem; }
+  main { padding: 12px 12px 32px; }
+  .card__summary { display: none; }
+  .timeline__controls { flex-wrap: wrap; gap: 8px 12px; }
+  .graph__svg { aspect-ratio: 4 / 3; }
+  .guide__map { height: 360px; }
+}
