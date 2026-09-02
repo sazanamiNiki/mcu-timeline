@@ -178,7 +178,10 @@ export function createGraph(container, works, edges) {
   });
   svg.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') highlight(null);
-    if (event.key === 'Enter' && event.target.classList.contains('graph__node')) highlight(event.target.dataset.id);
+    if ((event.key === 'Enter' || event.key === ' ') && event.target.classList.contains('graph__node')) {
+      event.preventDefault();
+      highlight(event.target.dataset.id);
+    }
   });
 
   applyView();
