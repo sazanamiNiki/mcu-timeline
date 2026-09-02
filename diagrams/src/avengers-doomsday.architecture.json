@@ -1,0 +1,241 @@
+{
+ "schema_version": 1,
+ "diagram_type": "architecture",
+ "meta": {
+  "title": "『アベンジャーズ/ドゥームズデイ』予習マップ",
+  "quality_profile": "standard",
+  "legend": {
+   "mode": "auto",
+   "entries": {
+    "backend": {
+     "label": "映画"
+    },
+    "frontend": {
+     "label": "ドラマ"
+    },
+    "external": {
+     "label": "スペシャル"
+    }
+   }
+  }
+ },
+ "components": [
+  {
+   "id": "doctor_strange_multiverse_of_madness",
+   "type": "backend",
+   "label": "ストレンジ／マルチバース",
+   "sublabel": "2022-05 映画",
+   "pos": [
+    30,
+    40
+   ],
+   "size": [
+    200,
+    52
+   ]
+  },
+  {
+   "id": "thor_love_and_thunder",
+   "type": "backend",
+   "label": "ソー:ラブ&サンダー",
+   "sublabel": "2022-07 映画",
+   "pos": [
+    260,
+    40
+   ],
+   "size": [
+    200,
+    52
+   ]
+  },
+  {
+   "id": "black_panther_wakanda_forever",
+   "type": "backend",
+   "label": "ワカンダ・フォーエバー",
+   "sublabel": "2022-11 映画",
+   "pos": [
+    490,
+    40
+   ],
+   "size": [
+    200,
+    52
+   ]
+  },
+  {
+   "id": "loki_s2",
+   "type": "frontend",
+   "label": "ロキ シーズン2",
+   "sublabel": "2023-10 ドラマ",
+   "pos": [
+    720,
+    40
+   ],
+   "size": [
+    200,
+    52
+   ]
+  },
+  {
+   "id": "deadpool_and_wolverine",
+   "type": "backend",
+   "label": "デッドプール&ウルヴァリン",
+   "sublabel": "2024-07 映画",
+   "pos": [
+    950,
+    40
+   ],
+   "size": [
+    200,
+    52
+   ]
+  },
+  {
+   "id": "captain_america_brave_new_world",
+   "type": "backend",
+   "label": "ブレイブ・ニュー・ワールド",
+   "sublabel": "2025-02 映画",
+   "pos": [
+    1180,
+    40
+   ],
+   "size": [
+    200,
+    52
+   ]
+  },
+  {
+   "id": "thunderbolts",
+   "type": "backend",
+   "label": "サンダーボルツ*",
+   "sublabel": "2025-05 映画",
+   "pos": [
+    1410,
+    40
+   ],
+   "size": [
+    200,
+    52
+   ]
+  },
+  {
+   "id": "the_fantastic_four_first_steps",
+   "type": "backend",
+   "label": "ファンタスティック4",
+   "sublabel": "2025-07 映画",
+   "pos": [
+    1640,
+    40
+   ],
+   "size": [
+    200,
+    52
+   ]
+  },
+  {
+   "id": "spider_man_brand_new_day",
+   "type": "backend",
+   "label": "ブランド・ニュー・デイ",
+   "sublabel": "2026-07 映画",
+   "pos": [
+    1870,
+    40
+   ],
+   "size": [
+    200,
+    52
+   ]
+  },
+  {
+   "id": "avengers_doomsday",
+   "type": "backend",
+   "label": "アベンジャーズ/ドゥームズデイ",
+   "sublabel": "2026-12 映画",
+   "pos": [
+    930.0,
+    300
+   ],
+   "size": [
+    240,
+    60
+   ],
+   "tag": "公開予定"
+  }
+ ],
+ "connections": [
+  {
+   "id": "e0",
+   "from": "doctor_strange_multiverse_of_madness",
+   "to": "avengers_doomsday",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "e1",
+   "from": "thor_love_and_thunder",
+   "to": "avengers_doomsday",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "e2",
+   "from": "black_panther_wakanda_forever",
+   "to": "avengers_doomsday",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "e3",
+   "from": "loki_s2",
+   "to": "avengers_doomsday",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "e4",
+   "from": "deadpool_and_wolverine",
+   "to": "avengers_doomsday",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "e5",
+   "from": "captain_america_brave_new_world",
+   "to": "avengers_doomsday",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "e6",
+   "from": "thunderbolts",
+   "to": "avengers_doomsday",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "e7",
+   "from": "the_fantastic_four_first_steps",
+   "to": "avengers_doomsday",
+   "fromSide": "bottom",
+   "toSide": "top"
+  },
+  {
+   "id": "e8",
+   "from": "spider_man_brand_new_day",
+   "to": "avengers_doomsday",
+   "fromSide": "bottom",
+   "toSide": "top"
+  }
+ ],
+ "cards": [
+  {
+   "dot": "cyan",
+   "title": "見方",
+   "items": [
+    "矢印の元の作品を先に観る",
+    "上の段は公開順に左から並ぶ",
+    "「公開予定」は未公開の作品"
+   ]
+  }
+ ]
+}
