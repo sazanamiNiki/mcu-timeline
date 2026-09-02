@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCU 作品カタログ</title>
+  <meta name="description" content="マーベル・シネマティック・ユニバースの映画とドラマを、公開順・作中の時系列・依存関係図で一覧する。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1 class="site-title">MCU 作品カタログ</h1>
+    <label class="search">
+      <span class="visually-hidden">作品を検索</span>
+      <input id="search" type="search" placeholder="タイトルで検索" autocomplete="off">
+    </label>
+    <nav class="tabs" aria-label="表示の切り替え">
+      <a href="#release" data-tab="release">公開順</a>
+      <a href="#story" data-tab="story">時系列</a>
+      <a href="#graph" data-tab="graph">依存関係図</a>
+      <a href="#guide" data-tab="guide">ガイド</a>
+    </nav>
+  </header>
+  <main>
+    <p id="status" class="status" hidden></p>
+    <section id="view-release" class="view" data-view="release" aria-label="公開順"></section>
+    <section id="view-story" class="view" data-view="story" aria-label="作中の時系列" hidden></section>
+    <section id="view-graph" class="view" data-view="graph" aria-label="依存関係図" hidden></section>
+    <section id="view-guide" class="view" data-view="guide" aria-label="ガイド" hidden></section>
+  </main>
+  <footer class="site-footer">
+    <p>データ更新日: <time id="updated"></time>。作品情報は Wikipedia と各公式発表に基づく。</p>
+    <p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+  </footer>
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>
