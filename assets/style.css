@@ -5,16 +5,17 @@
   --border: #2a3040;
   --text: #e8eaf0;
   --muted: #9aa3b5;
-  --accent: #e62429;
+  --accent: rgba(230, 36, 41, 0.8);
   --accent-soft: rgba(230, 36, 41, 0.18);
+  --watched: #3fb950;
   --graph-edge: #5b6478;
-  --phase-1: hsl(358 78% 30%);
-  --phase-2: hsl(358 78% 37%);
-  --phase-3: hsl(358 78% 44%);
-  --phase-4: hsl(358 78% 51%);
-  --phase-5: hsl(358 78% 58%);
-  --phase-6: hsl(358 78% 65%);
-  --phase-7: hsl(358 78% 74%);
+  --phase-1: hsl(358 78% 30% / 0.8);
+  --phase-2: hsl(358 78% 37% / 0.8);
+  --phase-3: hsl(358 78% 44% / 0.8);
+  --phase-4: hsl(358 78% 51% / 0.8);
+  --phase-5: hsl(358 78% 58% / 0.8);
+  --phase-6: hsl(358 78% 65% / 0.8);
+  --phase-7: hsl(358 78% 74% / 0.8);
   --card-w: 200px;
 }
 
@@ -74,6 +75,9 @@ main { padding: 16px 20px 40px; }
 .card[data-phase="5"] { --phase-color: var(--phase-5); }
 .card[data-phase="6"] { --phase-color: var(--phase-6); }
 .card[data-phase="7"] { --phase-color: var(--phase-7); }
+.card.card--watched { --phase-color: var(--watched); }
+.card--tappable { cursor: pointer; }
+.card--tappable:hover { background: var(--surface-2); }
 .card--upcoming { border-style: dashed; border-top-style: solid; }
 .card.is-dim { opacity: 0.35; }
 .card__poster { aspect-ratio: 2 / 3; background: var(--surface-2); }

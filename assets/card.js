@@ -32,7 +32,7 @@ function posterBlock(work) {
   return poster;
 }
 
-function watchedToggle(work, store, onChange) {
+function watchedToggle(work, store, onChange, card) {
   const label = el('label', 'card__watched');
   const input = document.createElement('input');
   input.type = 'checkbox';
@@ -40,17 +40,19 @@ function watchedToggle(work, store, onChange) {
   input.disabled = !usable;
   input.checked = usable && store.has(work.id);
   label.classList.toggle('is-watched', input.checked);
+  card.classList.toggle('card--watched', input.checked);
   input.addEventListener('change', () => {
     const now = store.toggle(work.id);
     label.classList.toggle('is-watched', now);
+    card.classList.toggle('card--watched', now);
     if (onChange) onChange(work, now);
   });
   label.append(input, el('span', null, ' 視聴済み'));
   return label;
 }
 
-/** 作品カードを返す。compact はガイドの一覧向けの横長表示。 */
-export function renderCard(work, { store, onChange, compact = false } = {}) {
+/** 作品カードを返す。compact は横長表示、tapToggle はカード全体のタップで視聴済みを切り替える。 */
+export function renderCard(work, { store, onChange, compact = false, tapToggle = false } = {}) {
   const card = el('article', compact ? 'card card--compact' : 'card');
   card.dataset.id = work.id;
   card.dataset.phase = String(work.phase);
@@ -66,8 +68,16 @@ export function renderCard(work, { store, onChange, compact = false } = {}) {
     el('p', 'card__dates', `日本 ${dateLabel(work.dateJp, work.upcoming)} / 米国 ${dateLabel(work.dateUs, work.upcoming)}`),
   );
   if (!compact) body.append(el('p', 'card__summary', work.summary));
-  body.append(watchedToggle(work, store, onChange));
+  body.append(watchedToggle(work, store, onChange, card));
 
   card.append(posterBlock(work), body);
+  if (tapToggle) {
+    card.classList.add('card--tappable');
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('.card__watched')) return;
+      const input = card.querySelector('.card__watched input');
+      if (input && !input.disabled) input.click();
+    });
+  }
   return card;
 }

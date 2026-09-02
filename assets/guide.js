@@ -25,7 +25,7 @@ function orderedList(entries, store) {
   const ol = el('ol', 'guide__list');
   for (const { work, note } of entries) {
     const li = el('li', 'guide__item');
-    li.append(renderCard(work, { store, compact: true }));
+    li.append(renderCard(work, { store, compact: true, tapToggle: true }));
     if (note) li.append(el('p', 'guide__note', note));
     ol.append(li);
   }

@@ -69,6 +69,7 @@ async function init() {
       const otherLabel = other.querySelector('.card__watched');
       if (otherInput) otherInput.checked = watched;
       if (otherLabel) otherLabel.classList.toggle('is-watched', watched);
+      other.classList.toggle('card--watched', watched);
     }
   });
 
