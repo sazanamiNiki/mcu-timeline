@@ -2,6 +2,7 @@ import { loadJson, includedWorks } from './data.js';
 import { createWatchedStore } from './watched.js';
 import { createTimeline } from './timeline.js';
 import { createGraph } from './graph.js';
+import { renderGuide } from './guide.js';
 
 export const TABS = ['release', 'story', 'graph', 'guide'];
 
@@ -35,8 +36,13 @@ function activateTab(name) {
 async function init() {
   let data;
   let deps;
+  let guides;
   try {
-    [data, deps] = await Promise.all([loadJson('data/mcu-works.json'), loadJson('data/dependencies.json')]);
+    [data, deps, guides] = await Promise.all([
+      loadJson('data/mcu-works.json'),
+      loadJson('data/dependencies.json'),
+      loadJson('data/guides.json'),
+    ]);
   } catch (err) {
     showStatus(`データを読み込めませんでした: ${err.message}`);
     return;
@@ -49,6 +55,7 @@ async function init() {
   const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store });
   const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store });
   const graph = createGraph(document.getElementById('view-graph'), works, deps.edges);
+  renderGuide(document.getElementById('view-guide'), works, guides, { store });
   const search = document.getElementById('search');
   search.addEventListener('input', () => {
     release.setQuery(search.value);

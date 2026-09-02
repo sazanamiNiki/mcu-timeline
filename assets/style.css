@@ -141,3 +141,13 @@ main { padding: 16px 20px 40px; }
 .graph__node.is-match .graph__node-frame { stroke: var(--text); stroke-width: 3; stroke-dasharray: 6 4; }
 .graph__node.is-muted { opacity: 0.2; }
 .graph__label { fill: var(--text); font-size: 12px; }
+
+/* ガイド */
+.guide__section { margin-bottom: 36px; }
+.guide__title { margin: 0 0 4px; font-size: 1.2rem; }
+.guide__subtitle { margin: 16px 0 8px; font-size: 1rem; color: var(--muted); }
+.guide__lead { margin: 0 0 12px; color: var(--muted); }
+.guide__list { display: grid; gap: 10px; margin: 0; padding-left: 1.6em; max-width: 720px; }
+.guide__item { padding-left: 4px; }
+.guide__note { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
+.guide__map { width: 100%; height: 560px; border: 1px solid var(--border); border-radius: 8px; background: #000; }
