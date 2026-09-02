@@ -96,7 +96,7 @@ main { padding: 16px 20px 40px; }
 .card__watched.is-watched { color: var(--text); }
 .card__watched input:disabled + span { opacity: 0.5; }
 .card--compact { flex-direction: row; width: auto; flex-basis: auto; }
-.card--compact .card__poster { flex: 0 0 60px; aspect-ratio: 2 / 3; align-self: center; border-radius: 4px; overflow: hidden; }
+.card--compact .card__poster { flex: 0 0 96px; aspect-ratio: 2 / 3; align-self: center; border-radius: 4px; overflow: hidden; }
 .card--compact .card__body { padding: 8px 10px; }
 
 /* タイムライン */

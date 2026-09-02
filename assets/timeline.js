@@ -61,7 +61,7 @@ export function createTimeline(container, works, { mode, store }) {
     for (const group of track.querySelectorAll('.timeline__group')) {
       group.hidden = !group.querySelector('.card:not([hidden])');
     }
-    count.textContent = `${visible} / ${works.length} 件`;
+    count.textContent = `表示中 ${visible} / ${works.length} 件`;
   }
 
   function renderTrack() {
