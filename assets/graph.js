@@ -139,7 +139,7 @@ export function createGraph(container, works, edges) {
       el('p', 'graph__detail-meta', meta),
       el('p', 'graph__detail-dates', `日本 ${dateLabel(work.dateJp, work.upcoming)} / 米国 ${dateLabel(work.dateUs, work.upcoming)}`),
       el('p', 'graph__detail-summary', work.summary),
-      el('p', 'graph__detail-deps', ancestorCount > 0 ? `先に観る作品 ${ancestorCount} 本を図の中で強調しています` : '先に観る作品はありません'),
+      el('p', 'graph__detail-deps', ancestorCount > 0 ? '先に観る作品を図の中で強調しています' : '先に観る作品はありません'),
     );
     detail.hidden = false;
   }

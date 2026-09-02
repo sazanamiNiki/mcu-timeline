@@ -38,7 +38,7 @@ export function renderGuide(container, works, guides, { store }) {
 
   const essential = sortByRelease(works.filter((w) => w.essential)).map((work) => ({ work }));
   const sections = [
-    section('短縮ルート', `大作につながる主要作 ${essential.length} 本を公開順に並べたルートです。`, orderedList(essential, store)),
+    section('短縮ルート', '大作につながる主要作を公開順に並べたルートです。', orderedList(essential, store)),
   ];
 
   for (const guide of guides.prep) {
@@ -57,6 +57,9 @@ export function renderGuide(container, works, guides, { store }) {
         const style = doc.createElement('style');
         style.textContent = '.diagram-nav { display: none !important; }';
         (doc.head ?? doc.documentElement).append(style);
+        for (const textEl of doc.querySelectorAll('svg text')) {
+          if (textEl.textContent.trim() === 'Legend') textEl.closest('g')?.setAttribute('display', 'none');
+        }
       } catch {
         /* クロスオリジン時は何もしない */
       }
