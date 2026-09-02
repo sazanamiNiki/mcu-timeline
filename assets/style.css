@@ -130,7 +130,6 @@ main { padding: 16px 20px 40px; }
 .graph__lane--alt { fill: rgba(255, 255, 255, 0.03); }
 .graph__lane-label { fill: var(--muted); font-size: 14px; }
 .graph__edge { fill: none; stroke: var(--graph-edge); stroke-width: 1.5; opacity: 0.7; transition: opacity 0.15s; }
-.graph__arrow { fill: var(--graph-edge); }
 .graph__edge.is-ancestor { stroke: var(--accent); stroke-width: 2.5; opacity: 1; }
 .graph__edge.is-muted { opacity: 0.08; }
 .graph__node { cursor: pointer; transition: opacity 0.15s; }
@@ -145,6 +144,7 @@ main { padding: 16px 20px 40px; }
 .graph__label { fill: var(--text); font-size: 12px; }
 .graph__watched { display: none; }
 .graph__node.is-watched .graph__watched { display: block; }
+.graph__lane.is-hidden, .graph__lane-label.is-hidden, .graph__node.is-hidden, .graph__edge.is-hidden { display: none; }
 .graph__watched-bg { fill: var(--watched); stroke: var(--bg); stroke-width: 1.5; }
 .graph__watched-check { fill: none; stroke: var(--bg); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -173,12 +173,13 @@ main { padding: 16px 20px 40px; }
 }
 
 /* 依存関係図: 概要パネル */
+.graph { position: relative; }
 .graph__detail {
-  display: flex; flex-wrap: wrap; gap: 2px 16px; align-items: baseline;
-  margin-bottom: 8px; padding: 10px 14px;
+  position: absolute; top: 0; left: 0; z-index: 5; width: 280px;
+  padding: 10px 14px;
   background: var(--surface);
   border: 1px solid var(--border); border-left: 4px solid var(--accent);
-  border-radius: 8px;
+  border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 .graph__detail-title { margin: 0; font-size: 1rem; font-weight: 600; }
 .graph__detail-en { margin: 0; font-size: 0.78rem; color: var(--muted); }

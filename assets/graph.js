@@ -1,4 +1,4 @@
-import { NODE_W, NODE_H, layoutGraph, ancestorsOf, edgePath } from './graph-layout.js';
+import { NODE_W, NODE_H, layoutGraph, ancestorsOf, edgePath, collapseLanes, nodeTransform, detailPosition } from './graph-layout.js';
 import { displayTitle, posterUrl, matchesQuery, dateLabel, KIND_LABELS, phaseLabel } from './data.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -55,26 +55,36 @@ export function createGraph(container, works, edges, { store } = {}) {
   detail.hidden = true;
 
   const svg = svgEl('svg', { class: 'graph__svg', role: 'group', 'aria-label': 'MCU作品の依存関係図' });
-  const defs = svgEl('defs');
-  const marker = svgEl('marker', {
-    id: 'graph-arrow', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse',
-  });
-  marker.append(svgEl('path', { d: 'M 0 0 L 10 5 L 0 10 z', class: 'graph__arrow' }));
-  defs.append(marker);
-
   const laneLayer = svgEl('g', { class: 'graph__lanes' });
-  layout.lanes.forEach((lane, i) => {
-    laneLayer.append(svgEl('rect', {
+  const laneEls = layout.lanes.map((lane, i) => {
+    const rect = svgEl('rect', {
       x: 0, y: lane.y - 20, width: layout.width, height: layout.rowHeight,
       class: `graph__lane${i % 2 ? ' graph__lane--alt' : ''}`,
-    }));
-    laneLayer.append(svgEl('text', { x: 12, y: lane.y + NODE_H / 2, class: 'graph__lane-label' }, lane.label));
+    });
+    const label = svgEl('text', { x: 12, y: lane.y + NODE_H / 2, class: 'graph__lane-label' }, lane.label);
+    laneLayer.append(rect, label);
+    return { lane, rect, label };
   });
+
+  /** 行の背景とラベルを更新する。laneY が null なら全行を元の位置に戻す。 */
+  function applyLanes(laneY) {
+    laneEls.forEach(({ lane, rect, label }, i) => {
+      const y = laneY ? laneY.get(lane.id) : lane.y;
+      const hidden = y === undefined;
+      rect.classList.toggle('is-hidden', hidden);
+      label.classList.toggle('is-hidden', hidden);
+      if (hidden) return;
+      const stripe = laneY ? [...laneY.keys()].indexOf(lane.id) : i;
+      rect.classList.toggle('graph__lane--alt', stripe % 2 === 1);
+      rect.setAttribute('y', y - 20);
+      label.setAttribute('y', y + NODE_H / 2);
+    });
+  }
 
   const edgeLayer = svgEl('g', { class: 'graph__edges' });
   const edgeEls = layout.edges.map((edge) => {
     const path = svgEl('path', {
-      d: edgePath(edge.x1, edge.y1, edge.x2, edge.y2), class: 'graph__edge', 'marker-end': 'url(#graph-arrow)',
+      d: edgePath(edge.x1, edge.y1, edge.x2, edge.y2), class: 'graph__edge',
       'data-from': edge.from, 'data-to': edge.to,
     });
     path.append(svgEl('title', {}, edge.note));
@@ -84,9 +94,10 @@ export function createGraph(container, works, edges, { store } = {}) {
 
   const nodeLayer = svgEl('g', { class: 'graph__nodes' });
   const nodeEls = new Map();
+  const nodeById = new Map(layout.nodes.map((n) => [n.id, n]));
   for (const node of layout.nodes) {
     const g = svgEl('g', {
-      class: 'graph__node', transform: `translate(${node.x} ${node.y})`, 'data-id': node.id, tabindex: 0, role: 'button',
+      class: 'graph__node', transform: nodeTransform(node.x, node.y), 'data-id': node.id, tabindex: 0, role: 'button',
     });
     g.append(svgEl('rect', { width: NODE_W, height: NODE_H, rx: 6, class: 'graph__node-box' }));
     const url = posterUrl(node.work);
@@ -103,7 +114,7 @@ export function createGraph(container, works, edges, { store } = {}) {
     nodeLayer.append(g);
     nodeEls.set(node.id, g);
   }
-  svg.append(defs, laneLayer, edgeLayer, nodeLayer);
+  svg.append(laneLayer, edgeLayer, nodeLayer);
   container.append(toolbar, detail, svg);
 
   // 表示範囲（viewBox）でパンとズームを表す
@@ -111,6 +122,7 @@ export function createGraph(container, works, edges, { store } = {}) {
   view.h = view.w * ASPECT;
   function applyView() {
     svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+    positionDetail();
   }
   function zoomBy(factor, cx = view.x + view.w / 2, cy = view.y + view.h / 2) {
     const w = Math.min(Math.max(view.w * factor, 300), layout.width * 2);
@@ -144,26 +156,64 @@ export function createGraph(container, works, edges, { store } = {}) {
       el('p', 'graph__detail-meta', meta),
       el('p', 'graph__detail-dates', `日本 ${dateLabel(work.dateJp, work.upcoming)} / 米国 ${dateLabel(work.dateUs, work.upcoming)}`),
       el('p', 'graph__detail-summary', work.summary),
-      el('p', 'graph__detail-deps', ancestorCount > 0 ? '先に観る作品を図の中で強調しています' : '先に観る作品はありません'),
+      el('p', 'graph__detail-deps', ancestorCount > 0 ? '先に観る作品を強調し、関係のない行は畳んでいます' : '先に観る作品はありません'),
     );
     detail.hidden = false;
   }
 
+  /** 概要カードを、強調中のサムネの横に配置する。 */
+  function positionDetail() {
+    if (!focused || detail.hidden) return;
+    const g = nodeEls.get(focused);
+    if (!g) return;
+    const area = svg.getBoundingClientRect();
+    const host = container.getBoundingClientRect();
+    const r = g.getBoundingClientRect();
+    const pos = detailPosition(
+      { x: r.left - area.left, y: r.top - area.top, w: r.width, h: r.height },
+      { w: detail.offsetWidth, h: detail.offsetHeight },
+      { w: area.width, h: area.height },
+    );
+    detail.style.left = `${pos.x + area.left - host.left}px`;
+    detail.style.top = `${pos.y + area.top - host.top}px`;
+  }
+
   let focused = null;
+  const FOCUS_SCALE = 1.3;
+  const ANCESTOR_SCALE = 1.15;
   function highlight(id) {
     focused = id;
     const set = id ? ancestorsOf(id, edges) : null;
+    const laneY = set ? collapseLanes(new Set([id, ...set]), layout) : null;
     for (const [nodeId, g] of nodeEls) {
+      const node = nodeById.get(nodeId);
+      const y = laneY ? laneY.get(node.laneId) : node.y;
+      const hidden = y === undefined;
+      g.classList.toggle('is-hidden', hidden);
       g.classList.toggle('is-focus', nodeId === id);
       g.classList.toggle('is-ancestor', Boolean(set && set.has(nodeId)));
       g.classList.toggle('is-muted', Boolean(set) && nodeId !== id && !set.has(nodeId));
+      if (hidden) continue;
+      const scale = nodeId === id ? FOCUS_SCALE : set && set.has(nodeId) ? ANCESTOR_SCALE : 1;
+      g.setAttribute('transform', nodeTransform(node.x, y, scale));
     }
     for (const { edge, path } of edgeEls) {
+      const ya = laneY ? laneY.get(nodeById.get(edge.from).laneId) : nodeById.get(edge.from).y;
+      const yb = laneY ? laneY.get(nodeById.get(edge.to).laneId) : nodeById.get(edge.to).y;
+      const hidden = ya === undefined || yb === undefined;
+      path.classList.toggle('is-hidden', hidden);
+      if (!hidden) path.setAttribute('d', edgePath(edge.x1, ya + NODE_H / 2, edge.x2, yb + NODE_H / 2));
       const on = Boolean(set) && set.has(edge.from) && (edge.to === id || set.has(edge.to));
       path.classList.toggle('is-ancestor', on);
       path.classList.toggle('is-muted', Boolean(set) && !on);
     }
+    applyLanes(laneY);
+    if (laneY) {
+      view.y = 0;
+      applyView();
+    }
     renderDetail(id, set ? set.size : 0);
+    positionDetail();
   }
 
   function setQuery(query) {
@@ -258,14 +308,18 @@ export function createGraph(container, works, edges, { store } = {}) {
   svg.addEventListener('pointercancel', (event) => endPointer(event, true));
 
   svg.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') highlight(null);
     if ((event.key === 'Enter' || event.key === ' ') && event.target.classList.contains('graph__node')) {
       event.preventDefault();
       highlight(event.target.dataset.id);
     }
   });
+  // パン後などフォーカスが図の外に移っても Esc で解除できるように document で拾う
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && focused) highlight(null);
+  });
 
   applyView();
+  window.addEventListener('resize', positionDetail);
   return {
     highlight,
     setQuery,

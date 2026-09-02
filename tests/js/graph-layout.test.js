@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LANES, NODE_W, NODE_H, layoutGraph, ancestorsOf, edgePath } from '../../assets/graph-layout.js';
+import { LANES, NODE_W, NODE_H, layoutGraph, ancestorsOf, edgePath, collapseLanes, nodeTransform, detailPosition } from '../../assets/graph-layout.js';
 
 const work = (id, dateUs, lane) => ({ id, dateUs, lane, titleJa: id, titleEn: id, kind: 'film', season: null });
 const WORKS = [work('b', '2012-05-04', 'avengers'), work('a', '2008-05-02', 'iron'), work('c', '2021-01-15', 'nowhere')];
@@ -39,4 +39,47 @@ test('ancestorsOf は推移的に前提を集め、自分を含まない', () =>
 test('edgePath は M で始まる3次ベジェ', () => {
   assert.match(edgePath(0, 0, 100, 50), /^M 0 0 C 50 0, 50 50, 100 50$/);
   assert.match(edgePath(0, 0, 20, 0), /^M 0 0 C 40 0, -20 0, 20 0$/);
+});
+
+test('layoutGraph はノードに解決済み laneId を付け、未知レーンは other に落とす', () => {
+  const layout = layoutGraph(WORKS, EDGES, { colWidth: 100, rowHeight: 50, marginX: 10, marginY: 5 });
+  assert.deepEqual(layout.nodes.map((n) => n.laneId), ['iron', 'avengers', 'other']);
+});
+
+test('collapseLanes は関連作品のいる行だけを元の順序で上から詰める', () => {
+  const layout = layoutGraph(WORKS, EDGES, { colWidth: 100, rowHeight: 50, marginX: 10, marginY: 5 });
+  const laneY = collapseLanes(new Set(['a', 'c']), layout);
+  assert.deepEqual([...laneY.entries()], [['iron', 5], ['other', 55]]);
+});
+
+test('collapseLanes はノードに存在しない id を無視する', () => {
+  const layout = layoutGraph(WORKS, EDGES, { colWidth: 100, rowHeight: 50, marginX: 10, marginY: 5 });
+  const laneY = collapseLanes(new Set(['zzz', 'b']), layout);
+  assert.deepEqual([...laneY.entries()], [['avengers', 5]]);
+});
+
+test('nodeTransform は scale なしなら translate だけ、あれば中心を保って拡大する', () => {
+  assert.equal(nodeTransform(100, 40), 'translate(100 40)');
+  assert.equal(nodeTransform(100, 40, 1), 'translate(100 40)');
+  assert.equal(nodeTransform(100, 40, 1.25), 'translate(91 26.5) scale(1.25)');
+});
+
+test('detailPosition は基本はノードの右横に置く', () => {
+  const pos = detailPosition({ x: 100, y: 50, w: 72, h: 108 }, { w: 280, h: 200 }, { w: 1000, h: 600 });
+  assert.deepEqual(pos, { x: 184, y: 50 });
+});
+
+test('detailPosition は右に入らなければ左横に置く', () => {
+  const pos = detailPosition({ x: 800, y: 50, w: 72, h: 108 }, { w: 280, h: 200 }, { w: 1000, h: 600 });
+  assert.deepEqual(pos, { x: 508, y: 50 });
+});
+
+test('detailPosition は左右どちらも入らなければ範囲内にクランプする', () => {
+  const pos = detailPosition({ x: 10, y: 50, w: 72, h: 108 }, { w: 280, h: 200 }, { w: 250, h: 600 });
+  assert.deepEqual(pos, { x: 0, y: 50 });
+});
+
+test('detailPosition は上下を表示領域内にクランプする', () => {
+  assert.deepEqual(detailPosition({ x: 100, y: 550, w: 72, h: 108 }, { w: 280, h: 200 }, { w: 1000, h: 600 }).y, 400);
+  assert.deepEqual(detailPosition({ x: 100, y: -50, w: 72, h: 108 }, { w: 280, h: 200 }, { w: 1000, h: 600 }).y, 0);
 });
