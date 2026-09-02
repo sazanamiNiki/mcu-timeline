@@ -109,3 +109,34 @@ main { padding: 16px 20px 40px; }
   font-size: 1rem; color: var(--muted); background: var(--bg); width: max-content;
 }
 .timeline__row { display: flex; gap: 12px; }
+
+/* 依存関係図 */
+.graph__toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.graph__toolbar button {
+  padding: 6px 12px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.graph__info { margin: 0 0 0 8px; font-size: 0.85rem; color: var(--muted); }
+.graph__svg {
+  display: block; width: 100%; aspect-ratio: 5 / 3;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  touch-action: none; cursor: grab; user-select: none;
+}
+.graph__svg:active { cursor: grabbing; }
+.graph__lane { fill: transparent; }
+.graph__lane--alt { fill: rgba(255, 255, 255, 0.03); }
+.graph__lane-label { fill: var(--muted); font-size: 14px; }
+.graph__edge { fill: none; stroke: #5b6478; stroke-width: 1.5; opacity: 0.7; transition: opacity 0.15s; }
+.graph__arrow { fill: #5b6478; }
+.graph__edge.is-ancestor { stroke: var(--accent); stroke-width: 2.5; opacity: 1; }
+.graph__edge.is-muted { opacity: 0.08; }
+.graph__node { cursor: pointer; transition: opacity 0.15s; }
+.graph__node:focus { outline: none; }
+.graph__node-box { fill: var(--surface-2); }
+.graph__node-frame { fill: none; stroke: var(--border); stroke-width: 1.5; }
+.graph__node-initial { fill: var(--muted); font-size: 18px; dominant-baseline: middle; }
+.graph__node.is-focus .graph__node-frame, .graph__node:focus .graph__node-frame { stroke: #fff; stroke-width: 3; }
+.graph__node.is-ancestor .graph__node-frame { stroke: var(--accent); stroke-width: 3; }
+.graph__node.is-match .graph__node-frame { stroke: #ffd166; stroke-width: 3; }
+.graph__node.is-muted { opacity: 0.2; }
+.graph__label { fill: var(--text); font-size: 12px; }
