@@ -49,6 +49,18 @@ export function renderGuide(container, works, guides, { store }) {
     frame.src = `diagrams/${guide.target}.html`;
     frame.title = `${displayTitle(target)} 予習マップ`;
     frame.loading = 'lazy';
+    frame.addEventListener('load', () => {
+      // 同一オリジンの生成物なので、埋め込みでは不要なビューア操作バー（ズーム%表示など）を隠す
+      try {
+        const doc = frame.contentDocument;
+        if (!doc) return;
+        const style = doc.createElement('style');
+        style.textContent = '.diagram-nav { display: none !important; }';
+        (doc.head ?? doc.documentElement).append(style);
+      } catch {
+        /* クロスオリジン時は何もしない */
+      }
+    });
     sections.push(section(
       `『${displayTitle(target)}』の予習`,
       `${formatDate(target.dateUs) ?? '公開日未定'} 公開。先に観ておく作品と理由です。`,
