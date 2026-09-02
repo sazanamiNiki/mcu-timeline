@@ -1,6 +1,6 @@
 import { loadJson, includedWorks } from './data.js';
 import { createWatchedStore } from './watched.js';
-import { renderCard } from './card.js';
+import { createTimeline } from './timeline.js';
 
 export const TABS = ['release', 'story', 'graph', 'guide'];
 
@@ -44,10 +44,13 @@ async function init() {
   document.getElementById('updated').textContent = data.meta.generated;
   if (!store.available) showStatus('このブラウザでは視聴済みを保存できません');
 
-  const strip = document.createElement('div');
-  strip.className = 'strip';
-  strip.append(...works.map((work) => renderCard(work, { store })));
-  document.getElementById('view-release').append(strip);
+  const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store });
+  const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store });
+  const search = document.getElementById('search');
+  search.addEventListener('input', () => {
+    release.setQuery(search.value);
+    story.setQuery(search.value);
+  });
 
   const applyHash = () => activateTab(tabFromHash(location.hash));
   window.addEventListener('hashchange', applyHash);

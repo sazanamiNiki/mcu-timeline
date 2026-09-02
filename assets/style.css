@@ -93,3 +93,19 @@ main { padding: 16px 20px 40px; }
 .card--compact { flex-direction: row; width: auto; flex-basis: auto; }
 .card--compact .card__poster { flex: 0 0 60px; aspect-ratio: 2 / 3; }
 .card--compact .card__body { padding: 8px 10px; }
+
+/* タイムライン */
+.timeline__controls { display: flex; gap: 16px; align-items: center; margin-bottom: 12px; font-size: 0.9rem; }
+.timeline__sort {
+  padding: 6px 12px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.timeline__essential { cursor: pointer; }
+.timeline__count { color: var(--muted); }
+.timeline__track { display: flex; gap: 24px; overflow-x: auto; padding-bottom: 12px; }
+.timeline__group { flex: 0 0 auto; }
+.timeline__heading {
+  position: sticky; left: 0; margin: 0 0 8px; padding: 2px 6px;
+  font-size: 1rem; color: var(--muted); background: var(--bg); width: max-content;
+}
+.timeline__row { display: flex; gap: 12px; }
