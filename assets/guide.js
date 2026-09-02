@@ -12,12 +12,11 @@ export function splitByPrerequisites(works, edges) {
   };
 }
 
-/** id の先に観る作品を遡って公開順で返す。直接の前提だけ note を持つ。未収録の id は捨てる。 */
-export function prerequisiteEntries(id, works, edges) {
+/** id の先に観る作品を遡って公開順で返す。未収録の id は捨てる。 */
+export function prerequisiteWorks(id, works, edges) {
   const byId = new Map(works.map((w) => [w.id, w]));
-  const noteByFrom = new Map(edges.filter((e) => e.to === id).map((e) => [e.from, e.note]));
   const ancestors = [...ancestorsOf(id, edges)].map((aid) => byId.get(aid)).filter(Boolean);
-  return sortByRelease(ancestors).map((work) => ({ work, note: noteByFrom.get(work.id) }));
+  return sortByRelease(ancestors);
 }
 
 function el(tag, className, text) {
@@ -33,13 +32,12 @@ function section(title, lead, ...children) {
   return sec;
 }
 
-/** 前提サムネの横スクロール列。直接の前提には理由を添える。 */
-function prereqStrip(entries, store) {
+/** 前提サムネの横スクロール列。 */
+function prereqStrip(works, store) {
   const ol = el('ol', 'strip guide__strip');
-  for (const { work, note } of entries) {
+  for (const work of works) {
     const li = el('li', 'guide__thumb');
     li.append(renderCard(work, { store, thumb: true }));
-    if (note) li.append(el('p', 'guide__note', note));
     ol.append(li);
   }
   return ol;
@@ -86,7 +84,7 @@ export function renderGuide(container, works, edges, { store }) {
       const panel = el('li', 'guide__panel');
       panel.append(
         el('h3', 'guide__panel-title', `『${displayTitle(work)}』の先に観る作品`),
-        prereqStrip(prerequisiteEntries(work.id, works, edges), store),
+        prereqStrip(prerequisiteWorks(work.id, works, edges), store),
       );
       li.after(panel);
       card.setAttribute('aria-expanded', 'true');
