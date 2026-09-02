@@ -36,12 +36,10 @@ function activateTab(name) {
 async function init() {
   let data;
   let deps;
-  let guides;
   try {
-    [data, deps, guides] = await Promise.all([
+    [data, deps] = await Promise.all([
       loadJson('data/mcu-works.json'),
       loadJson('data/dependencies.json'),
-      loadJson('data/guides.json'),
     ]);
   } catch (err) {
     showStatus(`データを読み込めませんでした: ${err.message}`);
@@ -55,7 +53,7 @@ async function init() {
   const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store });
   const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store });
   const graph = createGraph(document.getElementById('view-graph'), works, deps.edges, { store });
-  renderGuide(document.getElementById('view-guide'), works, guides, { store });
+  renderGuide(document.getElementById('view-guide'), works, deps.edges, { store });
 
   // 視聴済みの変更を、他のビューの同じ作品カードにも反映する
   document.addEventListener('change', (event) => {

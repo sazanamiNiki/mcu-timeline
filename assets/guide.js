@@ -1,21 +1,23 @@
 import { renderCard } from './card.js';
-import { displayTitle, formatDate, phaseLabel, posterUrl, sortByRelease } from './data.js';
+import { ancestorsOf } from './graph-layout.js';
+import { displayTitle, sortByRelease } from './data.js';
 
-/** 予習リストの id を作品に解決する。未収録の id は捨てる。 */
-export function prepEntries(guide, byId) {
-  return guide.items
-    .map((item) => ({ work: byId.get(item.id), note: item.note }))
-    .filter((entry) => entry.work);
+/** 前提の有無で作品を分ける。どちらも公開順。 */
+export function splitByPrerequisites(works, edges) {
+  const hasIncoming = new Set(edges.map((e) => e.to));
+  const sorted = sortByRelease(works);
+  return {
+    standalone: sorted.filter((w) => !hasIncoming.has(w.id)),
+    dependent: sorted.filter((w) => hasIncoming.has(w.id)),
+  };
 }
 
-/** essential な作品をフェーズごとに公開順でまとめる。 */
-export function phaseGroups(works) {
-  const groups = new Map();
-  for (const work of sortByRelease(works.filter((w) => w.essential))) {
-    if (!groups.has(work.phase)) groups.set(work.phase, []);
-    groups.get(work.phase).push(work);
-  }
-  return [...groups.keys()].sort((a, b) => a - b).map((phase) => ({ phase, works: groups.get(phase) }));
+/** id の先に観る作品を遡って公開順で返す。直接の前提だけ note を持つ。未収録の id は捨てる。 */
+export function prerequisiteEntries(id, works, edges) {
+  const byId = new Map(works.map((w) => [w.id, w]));
+  const noteByFrom = new Map(edges.filter((e) => e.to === id).map((e) => [e.from, e.note]));
+  const ancestors = [...ancestorsOf(id, edges)].map((aid) => byId.get(aid)).filter(Boolean);
+  return sortByRelease(ancestors).map((work) => ({ work, note: noteByFrom.get(work.id) }));
 }
 
 function el(tag, className, text) {
@@ -31,89 +33,81 @@ function section(title, lead, ...children) {
   return sec;
 }
 
-/** 飾りのポスター帯。画像が1枚もなければ null。 */
-function heroBand(works) {
-  const band = el('div', 'guide__hero');
-  band.setAttribute('aria-hidden', 'true');
-  for (const work of works) {
-    const url = posterUrl(work);
-    if (!url) continue;
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = '';
-    img.loading = 'lazy';
-    band.append(img);
-  }
-  return band.childElementCount ? band : null;
-}
-
-/** サムネの横スクロール列。note があればサムネの下に添える。 */
-function thumbStrip(entries, store) {
+/** 前提サムネの横スクロール列。直接の前提には理由を添える。 */
+function prereqStrip(entries, store) {
   const ol = el('ol', 'strip guide__strip');
   for (const { work, note } of entries) {
     const li = el('li', 'guide__thumb');
-    li.append(renderCard(work, { store, thumb: true, tapToggle: true }));
+    li.append(renderCard(work, { store, thumb: true }));
     if (note) li.append(el('p', 'guide__note', note));
     ol.append(li);
   }
   return ol;
 }
 
-function routeRows(groups, store) {
-  return groups.map(({ phase, works }) => {
-    const row = el('div', 'guide__row');
-    row.append(
-      el('h3', 'guide__phase', phaseLabel(phase)),
-      thumbStrip(works.map((work) => ({ work })), store),
-    );
-    return row;
-  });
+function grid(cells) {
+  const ul = el('ul', 'guide__grid');
+  ul.append(...cells);
+  return ul;
 }
 
-export function renderGuide(container, works, guides, { store }) {
-  const byId = new Map(works.map((w) => [w.id, w]));
+function cellOf(card) {
+  const li = el('li', 'guide__cell');
+  li.append(card);
+  return li;
+}
+
+export function renderGuide(container, works, edges, { store }) {
   container.classList.add('guide');
+  const { standalone, dependent } = splitByPrerequisites(works, edges);
 
-  const groups = phaseGroups(works);
-  const sections = [];
-  const hero = heroBand(groups.flatMap((g) => g.works));
-  if (hero) sections.push(hero);
-  sections.push(section(
-    '短縮ルート',
-    '大作につながる主要作を、フェーズごとに公開順で並べたルートです。',
-    ...routeRows(groups, store),
-  ));
+  const standaloneCells = standalone.map((work) => cellOf(renderCard(work, { store, thumb: true })));
 
-  for (const guide of guides.prep) {
-    const target = byId.get(guide.target);
-    if (!target) continue;
-    const frame = document.createElement('iframe');
-    frame.className = 'guide__map';
-    frame.src = `diagrams/${guide.target}.html`;
-    frame.title = `${displayTitle(target)} 予習マップ`;
-    frame.loading = 'lazy';
-    frame.addEventListener('load', () => {
-      // 同一オリジンの生成物なので、埋め込みでは不要なビューア操作バー（ズーム%表示など）を隠す
-      try {
-        const doc = frame.contentDocument;
-        if (!doc) return;
-        const style = doc.createElement('style');
-        style.textContent = '.diagram-nav { display: none !important; }';
-        (doc.head ?? doc.documentElement).append(style);
-        for (const textEl of doc.querySelectorAll('svg text')) {
-          if (textEl.textContent.trim() === 'Legend') textEl.closest('g')?.setAttribute('display', 'none');
-        }
-      } catch {
-        /* クロスオリジン時は何もしない */
-      }
+  let open = null; // { id, panel, card }
+  const close = () => {
+    if (!open) return;
+    open.panel.remove();
+    open.card.setAttribute('aria-expanded', 'false');
+    open.card.classList.remove('is-open');
+    open = null;
+  };
+
+  const dependentCells = dependent.map((work) => {
+    const card = renderCard(work, { store, thumb: true });
+    const li = cellOf(card);
+    card.classList.add('card--tappable', 'card--expandable');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-expanded', 'false');
+    const toggle = () => {
+      const wasOpen = open?.id === work.id;
+      close();
+      if (wasOpen) return;
+      const panel = el('li', 'guide__panel');
+      panel.append(
+        el('h3', 'guide__panel-title', `『${displayTitle(work)}』の先に観る作品`),
+        prereqStrip(prerequisiteEntries(work.id, works, edges), store),
+      );
+      li.after(panel);
+      card.setAttribute('aria-expanded', 'true');
+      card.classList.add('is-open');
+      open = { id: work.id, panel, card };
+    };
+    card.addEventListener('click', (event) => {
+      if (event.target.closest('.card__watched')) return;
+      toggle();
     });
-    sections.push(section(
-      `『${displayTitle(target)}』の予習`,
-      `${formatDate(target.dateUs) ?? '公開日未定'} 公開。先に観ておく作品と理由です。`,
-      thumbStrip(prepEntries(guide, byId), store),
-      el('h3', 'guide__subtitle', '予習マップ'),
-      frame,
-    ));
-  }
-  container.replaceChildren(...sections);
+    card.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      if (event.target.closest('.card__watched')) return;
+      event.preventDefault();
+      toggle();
+    });
+    return li;
+  });
+
+  container.replaceChildren(
+    section('単体で観られる作品', '前提となる作品がなく、ここから観始められます。', grid(standaloneCells)),
+    section('前提がある作品', '押すと、先に観ておく作品を公開順で表示します。', grid(dependentCells)),
+  );
 }
