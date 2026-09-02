@@ -68,7 +68,7 @@ export function createTimeline(container, works, { mode, store }) {
       const section = el('section', 'timeline__group');
       const row = el('div', 'timeline__row');
       for (const work of group.works) {
-        const card = renderCard(work, { store, compact: true, withSummary: true });
+        const card = renderCard(work, { store, compact: true, withSummary: true, tapToggle: true });
         cards.set(work.id, { work, card });
         row.append(card);
       }
