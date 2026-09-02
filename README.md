@@ -10,6 +10,8 @@ python3 -m http.server 8000
 
 `http://localhost:8000/` を開く。ビルドは不要。
 
+`index.html` を直接開く（`file://`）と ES モジュールと fetch が動かないため、必ず上のサーバー経由で開く。
+
 ## テストと検査
 
 ```bash

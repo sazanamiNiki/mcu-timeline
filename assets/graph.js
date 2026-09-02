@@ -43,7 +43,7 @@ export function createGraph(container, works, edges) {
   info.textContent = HINT;
   toolbar.append(zoomOut, zoomIn, reset, info);
 
-  const svg = svgEl('svg', { class: 'graph__svg', role: 'img', 'aria-label': 'MCU作品の依存関係図' });
+  const svg = svgEl('svg', { class: 'graph__svg', role: 'group', 'aria-label': 'MCU作品の依存関係図' });
   const defs = svgEl('defs');
   const marker = svgEl('marker', {
     id: 'graph-arrow', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse',
@@ -153,7 +153,14 @@ export function createGraph(container, works, edges) {
 
   let drag = null;
   svg.addEventListener('pointerdown', (event) => {
-    drag = { x: event.clientX, y: event.clientY, vx: view.x, vy: view.y, moved: false };
+    drag = {
+      x: event.clientX,
+      y: event.clientY,
+      vx: view.x,
+      vy: view.y,
+      moved: false,
+      node: event.target.closest('.graph__node'),
+    };
     svg.setPointerCapture(event.pointerId);
   });
   svg.addEventListener('pointermove', (event) => {
@@ -166,11 +173,10 @@ export function createGraph(container, works, edges) {
     view.y = drag.vy - dy;
     applyView();
   });
-  svg.addEventListener('pointerup', (event) => {
-    const moved = drag?.moved;
+  svg.addEventListener('pointerup', () => {
+    const { moved, node } = drag ?? {};
     drag = null;
     if (moved) return;
-    const node = event.target.closest('.graph__node');
     highlight(node ? node.dataset.id : null);
   });
   svg.addEventListener('pointercancel', () => {
