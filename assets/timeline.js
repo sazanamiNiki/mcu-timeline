@@ -44,24 +44,20 @@ export function createTimeline(container, works, { mode, store }) {
   const essentialInput = document.createElement('input');
   essentialInput.type = 'checkbox';
   essentialLabel.append(essentialInput, el('span', null, ' 主要作をハイライト'));
-  const count = el('span', 'timeline__count');
-  controls.append(sortButton, essentialLabel, count);
+  controls.append(sortButton, essentialLabel);
 
   const track = el('div', 'timeline__track');
   container.append(controls, track);
 
   function applyStates() {
-    let visible = 0;
     for (const { work, card } of cards.values()) {
       const stateName = cardState(work, state);
       card.hidden = stateName === 'hidden';
       card.classList.toggle('is-dim', stateName === 'dim');
-      if (stateName !== 'hidden') visible += 1;
     }
     for (const group of track.querySelectorAll('.timeline__group')) {
       group.hidden = !group.querySelector('.card:not([hidden])');
     }
-    count.textContent = `表示中 ${visible} / ${works.length} 件`;
   }
 
   function renderTrack() {

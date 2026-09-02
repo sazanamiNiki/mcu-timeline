@@ -106,7 +106,6 @@ main { padding: 16px 20px 40px; }
   border: 1px solid var(--border); background: var(--surface); color: var(--text);
 }
 .timeline__essential { cursor: pointer; }
-.timeline__count { color: var(--muted); }
 .timeline__track { display: flex; gap: 24px; overflow-x: auto; padding-bottom: 12px; }
 .timeline__group { flex: 0 0 auto; }
 .timeline__heading {
