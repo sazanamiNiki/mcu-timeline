@@ -70,7 +70,6 @@ export function createTimeline(container, works, { mode, store, list, prereqIds,
       for (const work of group.works) {
         const card = renderCard(work, { store, list, compact: true, withSummary: true });
         if (onShowPrereqs && prereqIds?.has(work.id)) {
-          card.classList.add('card--expandable');
           makeTappable(card, () => onShowPrereqs(work));
         }
         cards.set(work.id, { work, card });

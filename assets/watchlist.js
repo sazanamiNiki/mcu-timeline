@@ -72,7 +72,6 @@ export function createWatchlist(container, works, { store, list, sync, prereqIds
         const li = el('li', 'watchlist__cell');
         const card = renderCard(work, { store, list, thumb: true });
         if (onShowPrereqs && prereqIds?.has(work.id)) {
-          card.classList.add('card--expandable');
           makeTappable(card, () => onShowPrereqs(work));
         }
         li.append(card);

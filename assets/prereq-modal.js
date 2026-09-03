@@ -1,6 +1,6 @@
 import { renderCard, makeTappable } from './card.js';
 import { displayTitle } from './data.js';
-import { splitByPrerequisites, rolledPrerequisites } from './guide.js';
+import { splitByPrerequisites, rolledPrerequisites } from './prerequisites.js';
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -29,19 +29,19 @@ export function createPrereqModal(works, edges, { store, list }) {
     close.setAttribute('aria-label', '閉じる');
     close.addEventListener('click', () => dialog.close());
     head.append(el('h2', 'prereq-modal__title', `『${displayTitle(work)}』の先に観る作品`), close);
+    const summary = work.summary ? el('p', 'prereq-modal__summary', work.summary) : null;
 
     const strip = el('ol', 'strip prereq-modal__strip');
     for (const prereq of rolledPrerequisites(work.id, works, edges)) {
       const li = el('li', 'prereq-modal__thumb');
       const card = renderCard(prereq, { store, list, thumb: true });
       if (dependentIds.has(prereq.id)) {
-        card.classList.add('card--expandable');
         makeTappable(card, () => render(prereq));
       }
       li.append(card);
       strip.append(li);
     }
-    dialog.replaceChildren(head, strip);
+    dialog.replaceChildren(...[head, summary, strip].filter(Boolean));
   }
 
   return {

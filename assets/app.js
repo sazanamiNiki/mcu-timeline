@@ -2,13 +2,12 @@ import { loadJson, includedWorks, mergeSeasons } from './data.js';
 import { createWatchedStore, createIdSetStore, WATCHLIST_KEY } from './watched.js';
 import { createTimeline } from './timeline.js';
 import { createGraph } from './graph.js';
-import { renderGuide } from './guide.js';
 import { createWatchlist } from './watchlist.js';
 import { createSync, SYNC_ENDPOINT } from './sync.js';
 import { createPrereqModal } from './prereq-modal.js';
 import { applyWatchedState } from './card.js';
 
-export const TABS = ['release', 'story', 'graph', 'guide', 'watchlist'];
+export const TABS = ['release', 'story', 'graph', 'watchlist'];
 
 /** '#story' → 'story'。未知や空なら 'release'。 */
 export function tabFromHash(hash) {
@@ -74,7 +73,6 @@ async function init() {
   const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store, list, prereqIds: prereqModal.dependentIds, onShowPrereqs: showPrereqs });
   const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store, list, prereqIds: prereqModal.dependentIds, onShowPrereqs: showPrereqs });
   const graph = createGraph(document.getElementById('view-graph'), works, edges, { store });
-  renderGuide(document.getElementById('view-guide'), works, edges, { store, list });
   const watchlist = createWatchlist(document.getElementById('view-watchlist'), works, { store, list, sync, prereqIds: prereqModal.dependentIds, onShowPrereqs: showPrereqs });
   applyRemote = () => {
     for (const card of document.querySelectorAll('.card[data-id]')) {

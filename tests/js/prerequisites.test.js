@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { splitByPrerequisites, prerequisiteWorks, rolledPrerequisites } from '../../assets/guide.js';
+import { splitByPrerequisites, prerequisiteWorks, rolledPrerequisites } from '../../assets/prerequisites.js';
 
 const WORKS = [
   { id: 'a', dateUs: '2008-05-02' },
