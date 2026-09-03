@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWatchedStore, STORAGE_KEY } from '../../assets/watched.js';
+import { createWatchedStore, createIdSetStore, STORAGE_KEY } from '../../assets/watched.js';
 
 function fakeStorage(initial = {}) {
   const map = new Map(Object.entries(initial));
@@ -46,4 +46,15 @@ test('setItem が例外を投げる storage は available=false', () => {
   const store = createWatchedStore(throwing);
   assert.equal(store.available, false);
   assert.doesNotThrow(() => store.toggle('iron-man'));
+});
+
+test('createIdSetStore は指定キーで保存し、他のキーと混ざらない', () => {
+  const storage = fakeStorage();
+  const list = createIdSetStore(storage, 'mcu-watchlist');
+  const watched = createWatchedStore(storage);
+  list.toggle('thor');
+  watched.toggle('iron-man');
+  assert.deepEqual(JSON.parse(storage.dump()['mcu-watchlist']), ['thor']);
+  assert.deepEqual(JSON.parse(storage.dump()[STORAGE_KEY]), ['iron-man']);
+  assert.equal(list.has('iron-man'), false);
 });

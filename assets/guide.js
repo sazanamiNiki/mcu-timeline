@@ -83,12 +83,12 @@ function makeTappable(card, action) {
   });
 }
 
-export function renderGuide(container, works, edges, { store }) {
+export function renderGuide(container, works, edges, { store, list }) {
   container.classList.add('guide');
   const { standalone, dependent } = splitByPrerequisites(works, edges);
   const dependentIds = new Set(dependent.map((w) => w.id));
 
-  const standaloneCells = standalone.map((work) => cellOf(renderCard(work, { store, thumb: true })));
+  const standaloneCells = standalone.map((work) => cellOf(renderCard(work, { store, list, thumb: true })));
 
   const cells = new Map(); // id → { li, card }
   let open = null; // { id, panel, card }
@@ -106,7 +106,7 @@ export function renderGuide(container, works, edges, { store }) {
     const ol = el('ol', 'strip guide__strip');
     for (const work of prereqs) {
       const li = el('li', 'guide__thumb');
-      const card = renderCard(work, { store, thumb: true });
+      const card = renderCard(work, { store, list, thumb: true });
       if (dependentIds.has(work.id)) makeTappable(card, () => drill(work));
       li.append(card);
       ol.append(li);
@@ -135,7 +135,7 @@ export function renderGuide(container, works, edges, { store }) {
   }
 
   const dependentCells = dependent.map((work) => {
-    const card = renderCard(work, { store, thumb: true });
+    const card = renderCard(work, { store, list, thumb: true });
     const li = cellOf(card);
     cells.set(work.id, { li, card });
     card.classList.add('card--expandable');

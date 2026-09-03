@@ -81,7 +81,10 @@ main { padding: 16px 20px 40px; }
 .card--tappable:hover { background: var(--surface-2); }
 .card--upcoming { border-style: dashed; border-top-style: solid; }
 .card.is-dim { opacity: 0.35; }
-.card__poster { aspect-ratio: 2 / 3; background: var(--surface-2); }
+.card__poster {
+  position: relative; aspect-ratio: 2 / 3; background: var(--surface-2);
+  -webkit-touch-callout: none; user-select: none;
+}
 .card__poster img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .card__placeholder {
   display: flex; align-items: center; justify-content: center; height: 100%;
@@ -100,8 +103,12 @@ main { padding: 16px 20px 40px; }
 .card--compact .card__poster { flex: 0 0 96px; aspect-ratio: 2 / 3; align-self: center; border-radius: 4px; overflow: hidden; }
 .card--compact .card__body { padding: 8px 10px; }
 .card--thumb .card__body { padding: 4px 8px 6px; }
-.card--thumb .card__poster { position: relative; }
 .card--thumb .card__watched { padding-top: 0; font-size: 0.72rem; }
+.card--listed .card__poster::before {
+  content: ''; position: absolute; top: 0; left: 10px; z-index: 1;
+  width: 14px; height: 22px; background: var(--accent);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 70%, 0 100%);
+}
 .card--thumb.card--watched .card__poster::after {
   content: '\2713'; position: absolute; top: 6px; right: 6px;
   display: flex; align-items: center; justify-content: center;
@@ -175,6 +182,11 @@ main { padding: 16px 20px 40px; }
 .guide__thumb { flex: 0 0 var(--thumb-w); width: var(--thumb-w); display: flex; flex-direction: column; gap: 4px; }
 .guide__thumb .card { flex: 1 1 auto; width: 100%; }
 .card--expandable.is-open { border-color: var(--text); }
+
+/* ウォッチリスト */
+.watchlist__lead { margin: 0 0 12px; color: var(--muted); }
+.watchlist__grid { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.watchlist__cell .card { flex: 0 0 var(--thumb-w); width: var(--thumb-w); }
 
 /* スマホ */
 @media (max-width: 600px) {

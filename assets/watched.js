@@ -1,11 +1,12 @@
-// 視聴済みの保存。localStorage 互換の storage を注入する。DOM に依存しない。
+// 視聴済みなどの「id の集合」の保存。localStorage 互換の storage を注入する。DOM に依存しない。
 
 export const STORAGE_KEY = 'mcu-watched';
+export const WATCHLIST_KEY = 'mcu-watchlist';
 const PROBE_KEY = '__mcu_probe__';
 
-function readIds(storage) {
+function readIds(storage, key) {
   try {
-    const raw = storage.getItem(STORAGE_KEY);
+    const raw = storage.getItem(key);
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
   } catch {
@@ -13,7 +14,8 @@ function readIds(storage) {
   }
 }
 
-export function createWatchedStore(storage) {
+/** 指定キーに id の集合を保存するストア。 */
+export function createIdSetStore(storage, key) {
   let available = false;
   let ids = new Set();
   try {
@@ -21,7 +23,7 @@ export function createWatchedStore(storage) {
       storage.setItem(PROBE_KEY, '1');
       storage.removeItem(PROBE_KEY);
       available = true;
-      ids = new Set(readIds(storage));
+      ids = new Set(readIds(storage, key));
     }
   } catch {
     available = false;
@@ -30,7 +32,7 @@ export function createWatchedStore(storage) {
   function persist() {
     if (!available) return;
     try {
-      storage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
+      storage.setItem(key, JSON.stringify([...ids]));
     } catch {
       available = false;
     }
@@ -49,4 +51,8 @@ export function createWatchedStore(storage) {
     },
     ids: () => [...ids],
   };
+}
+
+export function createWatchedStore(storage) {
+  return createIdSetStore(storage, STORAGE_KEY);
 }

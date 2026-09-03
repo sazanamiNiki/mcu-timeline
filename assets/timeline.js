@@ -31,7 +31,7 @@ function el(tag, className, text) {
 }
 
 /** 横スクロールのタイムラインを container に描く。mode は 'release' か 'story'。 */
-export function createTimeline(container, works, { mode, store }) {
+export function createTimeline(container, works, { mode, store, list }) {
   const state = { query: '', dir: 'asc', essentialOnly: false };
   const cards = new Map();
   container.classList.add('timeline');
@@ -68,7 +68,7 @@ export function createTimeline(container, works, { mode, store }) {
       const section = el('section', 'timeline__group');
       const row = el('div', 'timeline__row');
       for (const work of group.works) {
-        const card = renderCard(work, { store, compact: true, withSummary: true, tapToggle: true });
+        const card = renderCard(work, { store, list, compact: true, withSummary: true, tapToggle: true });
         cards.set(work.id, { work, card });
         row.append(card);
       }

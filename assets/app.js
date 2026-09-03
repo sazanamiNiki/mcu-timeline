@@ -1,10 +1,11 @@
 import { loadJson, includedWorks, mergeSeasons } from './data.js';
-import { createWatchedStore } from './watched.js';
+import { createWatchedStore, createIdSetStore, WATCHLIST_KEY } from './watched.js';
 import { createTimeline } from './timeline.js';
 import { createGraph } from './graph.js';
 import { renderGuide } from './guide.js';
+import { createWatchlist } from './watchlist.js';
 
-export const TABS = ['release', 'story', 'graph', 'guide'];
+export const TABS = ['release', 'story', 'graph', 'guide', 'watchlist'];
 
 /** '#story' → 'story'。未知や空なら 'release'。 */
 export function tabFromHash(hash) {
@@ -47,13 +48,15 @@ async function init() {
   }
   const { works, edges } = mergeSeasons(includedWorks(data), deps.edges);
   const store = createWatchedStore(storageOrNull());
+  const list = createIdSetStore(storageOrNull(), WATCHLIST_KEY);
   document.getElementById('updated').textContent = data.meta.generated;
   if (!store.available) showStatus('このブラウザでは視聴済みを保存できません');
 
-  const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store });
-  const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store });
+  const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store, list });
+  const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store, list });
   const graph = createGraph(document.getElementById('view-graph'), works, edges, { store });
-  renderGuide(document.getElementById('view-guide'), works, edges, { store });
+  renderGuide(document.getElementById('view-guide'), works, edges, { store, list });
+  const watchlist = createWatchlist(document.getElementById('view-watchlist'), works, { store, list });
 
   // 視聴済みの変更を、他のビューの同じ作品カードにも反映する
   document.addEventListener('change', (event) => {
@@ -71,6 +74,59 @@ async function init() {
     }
     graph.setWatched(card.dataset.id, watched);
   });
+
+  // ウォッチリスト: カードの右クリック（スマホは長押し）で追加・削除をトグルする
+  const lastGesture = new Map();
+  function toggleListed(id) {
+    const now = Date.now();
+    if (now - (lastGesture.get(id) ?? 0) < 700) return; // 長押しと contextmenu の二重発火ガード
+    lastGesture.set(id, now);
+    const listed = list.toggle(id);
+    for (const other of document.querySelectorAll(`.card[data-id="${CSS.escape(id)}"]`)) {
+      other.classList.toggle('card--listed', listed);
+    }
+    watchlist.refresh();
+  }
+  document.addEventListener('contextmenu', (event) => {
+    const card = event.target.closest('.card[data-id]');
+    if (!card || !list.available) return;
+    event.preventDefault();
+    toggleListed(card.dataset.id);
+  });
+  // iOS は長押しで contextmenu が発火しないため、ポインタで長押しを判定する
+  let press = null;
+  let suppressClickUntil = 0;
+  const cancelPress = () => {
+    if (!press) return;
+    clearTimeout(press.timer);
+    press = null;
+  };
+  document.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'mouse') return;
+    const card = event.target.closest('.card[data-id]');
+    if (!card || !list.available) return;
+    cancelPress();
+    press = {
+      x: event.clientX,
+      y: event.clientY,
+      timer: setTimeout(() => {
+        press = null;
+        suppressClickUntil = Date.now() + 600; // 長押し後のタップ誤発火（視聴済み・展開）を抑止
+        toggleListed(card.dataset.id);
+      }, 550),
+    };
+  });
+  document.addEventListener('pointermove', (event) => {
+    if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 10) cancelPress();
+  });
+  document.addEventListener('pointerup', cancelPress);
+  document.addEventListener('pointercancel', cancelPress);
+  document.addEventListener('click', (event) => {
+    if (Date.now() < suppressClickUntil) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
 
   const search = document.getElementById('search');
   search.addEventListener('input', () => {
