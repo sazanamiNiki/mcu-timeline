@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  includedWorks, toWork, displayTitle, sortByRelease, sortByStory, matchesQuery,
+  includedWorks, toWork, displayTitle, mergeSeasons, sortByRelease, sortByStory, matchesQuery,
   posterUrl, formatDate, dateLabel, loadJson, POSTER_BASE,
 } from '../../assets/data.js';
 
@@ -95,4 +95,29 @@ test('formatDate と dateLabel', () => {
 test('loadJson は失敗時に例外、成功時に JSON を返す', async () => {
   await assert.rejects(loadJson('x.json', async () => ({ ok: false, status: 404 })), /404/);
   assert.deepEqual(await loadJson('x.json', async () => ({ ok: true, json: async () => ({ a: 1 }) })), { a: 1 });
+});
+
+test('mergeSeasons は複数シーズンを1エントリに統合し、エッジを張り替える', () => {
+  const works = [
+    { id: 'movie', kind: 'film', titleJa: '映画', season: null, dateUs: '2008-01-01' },
+    { id: 'foo-s1', kind: 'series', titleJa: 'フー', season: 1, dateUs: '2021-01-01' },
+    { id: 'bar-s1', kind: 'series', titleJa: 'バー', season: 1, dateUs: '2022-01-01' },
+    { id: 'foo-s2', kind: 'series', titleJa: 'フー', season: 2, dateUs: '2023-01-01' },
+    { id: 'later', kind: 'film', titleJa: '続編', season: null, dateUs: '2024-01-01' },
+  ];
+  const edges = [
+    { from: 'movie', to: 'foo-s1', note: 'a' },
+    { from: 'foo-s1', to: 'foo-s2', note: 'b' },
+    { from: 'foo-s2', to: 'later', note: 'c' },
+    { from: 'movie', to: 'foo-s2', note: 'd' },
+  ];
+  const merged = mergeSeasons(works, edges);
+  assert.deepEqual(merged.works.map((w) => w.id), ['movie', 'foo-s1', 'bar-s1', 'later']);
+  const foo = merged.works.find((w) => w.id === 'foo-s1');
+  assert.equal(displayTitle(foo), 'フー');
+  assert.equal(displayTitle(merged.works.find((w) => w.id === 'bar-s1')), 'バー シーズン1');
+  assert.deepEqual(merged.edges, [
+    { from: 'movie', to: 'foo-s1', note: 'a' },
+    { from: 'foo-s1', to: 'later', note: 'c' },
+  ]);
 });

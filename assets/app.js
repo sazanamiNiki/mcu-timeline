@@ -1,4 +1,4 @@
-import { loadJson, includedWorks } from './data.js';
+import { loadJson, includedWorks, mergeSeasons } from './data.js';
 import { createWatchedStore } from './watched.js';
 import { createTimeline } from './timeline.js';
 import { createGraph } from './graph.js';
@@ -45,15 +45,15 @@ async function init() {
     showStatus(`データを読み込めませんでした: ${err.message}`);
     return;
   }
-  const works = includedWorks(data);
+  const { works, edges } = mergeSeasons(includedWorks(data), deps.edges);
   const store = createWatchedStore(storageOrNull());
   document.getElementById('updated').textContent = data.meta.generated;
   if (!store.available) showStatus('このブラウザでは視聴済みを保存できません');
 
   const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store });
   const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store });
-  const graph = createGraph(document.getElementById('view-graph'), works, deps.edges, { store });
-  renderGuide(document.getElementById('view-guide'), works, deps.edges, { store });
+  const graph = createGraph(document.getElementById('view-graph'), works, edges, { store });
+  renderGuide(document.getElementById('view-guide'), works, edges, { store });
 
   // 視聴済みの変更を、他のビューの同じ作品カードにも反映する
   document.addEventListener('change', (event) => {

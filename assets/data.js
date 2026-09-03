@@ -34,6 +34,45 @@ export function toWork(raw, kind) {
   };
 }
 
+/**
+ * 同一シリーズの複数シーズンを1エントリに統合する。
+ * 代表は最初のシーズンで、シーズン表記は消す。エッジは代表に張り替え、
+ * シーズン間エッジ（自己参照になるもの）と重複は捨てる。
+ */
+export function mergeSeasons(works, edges) {
+  const groups = new Map();
+  for (const work of works) {
+    const m = work.id.match(/^(.+)-s\d+$/);
+    if (!m) continue;
+    if (!groups.has(m[1])) groups.set(m[1], []);
+    groups.get(m[1]).push(work);
+  }
+  const alias = new Map();
+  const merged = new Map();
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    list.sort((a, b) => (a.season ?? 0) - (b.season ?? 0));
+    const [rep, ...rest] = list;
+    merged.set(rep.id, { ...rep, season: null });
+    for (const w of rest) alias.set(w.id, rep.id);
+  }
+  const outEdges = [];
+  const seen = new Set();
+  for (const e of edges) {
+    const from = alias.get(e.from) ?? e.from;
+    const to = alias.get(e.to) ?? e.to;
+    if (from === to) continue;
+    const key = `${from}\u2192${to}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    outEdges.push({ ...e, from, to });
+  }
+  return {
+    works: works.filter((w) => !alias.has(w.id)).map((w) => merged.get(w.id) ?? w),
+    edges: outEdges,
+  };
+}
+
 /** 収録対象（正史の実写作品）だけを公開順で返す。 */
 export function includedWorks(data) {
   const films = data.films.map((f) => toWork(f, 'film'));
