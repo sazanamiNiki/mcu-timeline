@@ -4,7 +4,7 @@
 export const CODE_RE = /^[a-z0-9-]{8,64}$/;
 export const SYNC_META_KEY = 'mcu-sync';
 // デプロイ後に Worker の URL に置き換える
-export const SYNC_ENDPOINT = 'https://REPLACE-ME.workers.dev/sync';
+export const SYNC_ENDPOINT = 'https://mcu-sync.thegardenas.workers.dev/sync';
 
 export function newSyncCode() {
   return `mcu-${crypto.randomUUID()}`;
