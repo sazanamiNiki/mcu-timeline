@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CODE_RE, newSyncCode, parseState, pickNewer } from '../../assets/sync.js';
+import { CODE_RE, newSyncCode, parseState, pickNewer, codeFromInput } from '../../assets/sync.js';
 
 test('newSyncCode は形式に合うコードを毎回生成する', () => {
   const a = newSyncCode();
@@ -28,4 +28,14 @@ test('pickNewer は updatedAt が新しい方を返し、null は相手に譲る
   assert.equal(pickNewer(null, newer), newer);
   assert.equal(pickNewer(older, null), older);
   assert.equal(pickNewer(null, null), null);
+});
+
+test('codeFromInput はURLでも生コードでも受け付け、それ以外は null', () => {
+  assert.equal(codeFromInput('mcu-1234abcd-ef56-7890-abcd-ef1234567890'), 'mcu-1234abcd-ef56-7890-abcd-ef1234567890');
+  assert.equal(codeFromInput('https://example.com/app/#sync=mcu-1234abcd-ef56-7890-abcd-ef1234567890'), 'mcu-1234abcd-ef56-7890-abcd-ef1234567890');
+  assert.equal(codeFromInput('  https://example.com/#sync=mcu-1234abcd-ef56-7890-abcd-ef1234567890  '), 'mcu-1234abcd-ef56-7890-abcd-ef1234567890');
+  assert.equal(codeFromInput('https://example.com/#sync=mcu%2D1234abcd-ef56-7890-abcd-ef1234567890'), 'mcu-1234abcd-ef56-7890-abcd-ef1234567890');
+  assert.equal(codeFromInput('BAD CODE'), null);
+  assert.equal(codeFromInput('https://example.com/#other=x'), null);
+  assert.equal(codeFromInput(''), null);
 });

@@ -10,6 +10,22 @@ export function newSyncCode() {
   return `mcu-${crypto.randomUUID()}`;
 }
 
+function safeDecode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+/** 入力欄の値から同期コードを取り出す。#sync= 付きリンクでも生コードでもよい。 */
+export function codeFromInput(text) {
+  const raw = (text ?? '').trim();
+  const marker = raw.indexOf('#sync=');
+  const candidate = safeDecode(marker >= 0 ? raw.slice(marker + '#sync='.length) : raw).trim();
+  return CODE_RE.test(candidate) ? candidate : null;
+}
+
 /** 同期ペイロードの検証。形が違えば null。文字列以外の id は捨てる。 */
 export function parseState(value) {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;

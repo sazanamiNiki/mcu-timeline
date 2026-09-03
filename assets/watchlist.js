@@ -1,5 +1,6 @@
 import { renderCard, makeTappable } from './card.js';
 import { sortByRelease } from './data.js';
+import { codeFromInput } from './sync.js';
 
 /** リストに入っている作品だけを公開順で返す。 */
 export function listedWorks(works, list) {
@@ -34,29 +35,30 @@ export function createWatchlist(container, works, { store, list, sync, prereqIds
     const input = document.createElement('input');
     input.className = 'watchlist__sync-code';
     if (sync.code) {
-      note.textContent = 'このコードを他の端末で入力すると、視聴済みとウォッチリストを共有します。';
+      note.textContent = 'このリンクを他の端末で開くと、視聴済みとウォッチリストを共有します。';
       input.readOnly = true;
-      input.value = sync.code;
+      input.value = `${location.origin}${location.pathname}#sync=${sync.code}`;
       input.addEventListener('focus', () => input.select());
-      const copy = button('コピー', async () => {
+      const copy = button('リンクをコピー', async () => {
         try {
-          await navigator.clipboard.writeText(sync.code);
+          await navigator.clipboard.writeText(input.value);
           copy.textContent = 'コピーしました';
-          setTimeout(() => { copy.textContent = 'コピー'; }, 1200);
+          setTimeout(() => { copy.textContent = 'リンクをコピー'; }, 1200);
         } catch {
           input.select();
         }
       });
       row.append(input, copy, button('解除', () => { sync.disable(); refresh(); }));
     } else {
-      note.textContent = 'コードを発行するか、他の端末で発行したコードを入力して参加します。';
-      input.placeholder = '他の端末のコード';
+      note.textContent = '共有リンクを発行するか、他の端末で発行したリンクを貼り付けて参加します。';
+      input.placeholder = '他の端末のリンク';
       const join = button('参加', async () => {
-        const ok = await sync.join(input.value.trim());
+        const code = codeFromInput(input.value);
+        const ok = code ? await sync.join(code) : false;
         if (ok) refresh();
-        else note.textContent = 'コードの形式が違います。発行したコードをそのまま貼り付けてください。';
+        else note.textContent = 'リンクの形式が違います。発行したリンクをそのまま貼り付けてください。';
       });
-      const enable = button('同期コードを発行', () => { sync.enable(); refresh(); });
+      const enable = button('共有リンクを発行', () => { sync.enable(); refresh(); });
       enable.classList.add('watchlist__sync-primary');
       box.append(enable);
       row.append(input, join);
