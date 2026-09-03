@@ -56,7 +56,9 @@ export function createWatchlist(container, works, { store, list, sync, prereqIds
         if (ok) refresh();
         else note.textContent = 'コードの形式が違います。発行したコードをそのまま貼り付けてください。';
       });
-      box.append(button('同期コードを発行', () => { sync.enable(); refresh(); }));
+      const enable = button('同期コードを発行', () => { sync.enable(); refresh(); });
+      enable.classList.add('watchlist__sync-primary');
+      box.append(enable);
       row.append(input, join);
     }
     box.append(row);
@@ -67,10 +69,10 @@ export function createWatchlist(container, works, { store, list, sync, prereqIds
     const parts = [el('p', 'watchlist__lead', '作品カードを右クリック（スマホは長押し）で追加・削除できます。')];
     const items = listedWorks(works, list);
     if (items.length) {
-      const ul = el('ul', 'watchlist__grid');
+      const ul = el('ul', 'watchlist__list');
       for (const work of items) {
-        const li = el('li', 'watchlist__cell');
-        const card = renderCard(work, { store, list, thumb: true });
+        const li = el('li');
+        const card = renderCard(work, { store, list, compact: true, withSummary: true });
         if (onShowPrereqs && prereqIds?.has(work.id)) {
           makeTappable(card, () => onShowPrereqs(work));
         }

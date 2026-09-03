@@ -170,6 +170,33 @@ main { padding: 16px 20px 40px; }
 .graph__watched-bg { fill: var(--watched); stroke: var(--bg); stroke-width: 1.5; }
 .graph__watched-check { fill: none; stroke: var(--bg); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
+/* ウォッチリスト */
+.watchlist__lead { margin: 0 0 12px; color: var(--muted); }
+.watchlist__list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; max-width: 760px; }
+
+/* 同期ボックス */
+.watchlist__sync {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-top: 32px; padding: 16px 18px; max-width: 560px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+}
+.watchlist__sync-title { margin: 0; font-size: 1rem; }
+.watchlist__sync-note { margin: 0; font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+.watchlist__sync-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.watchlist__sync-code {
+  flex: 1 1 200px; min-width: 0; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface-2); color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.85rem;
+}
+.watchlist__sync button {
+  padding: 8px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  transition: filter 0.15s;
+}
+.watchlist__sync button:hover { filter: brightness(1.25); }
+.watchlist__sync button.watchlist__sync-primary { background: var(--accent); border-color: transparent; color: #fff; align-self: flex-start; }
+
 /* 前提モーダル */
 .prereq-modal {
   width: min(940px, calc(100vw - 32px));
