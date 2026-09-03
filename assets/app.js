@@ -5,6 +5,8 @@ import { createGraph } from './graph.js';
 import { renderGuide } from './guide.js';
 import { createWatchlist } from './watchlist.js';
 import { createSync, SYNC_ENDPOINT } from './sync.js';
+import { createPrereqModal } from './prereq-modal.js';
+import { applyWatchedState } from './card.js';
 
 export const TABS = ['release', 'story', 'graph', 'guide', 'watchlist'];
 
@@ -67,44 +69,32 @@ async function init() {
   document.getElementById('updated').textContent = data.meta.generated;
   if (!store.available) showStatus('このブラウザでは視聴済みを保存できません');
 
-  const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store, list });
-  const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store, list });
+  const prereqModal = createPrereqModal(works, edges, { store, list });
+  const showPrereqs = (work) => prereqModal.open(work);
+  const release = createTimeline(document.getElementById('view-release'), works, { mode: 'release', store, list, prereqIds: prereqModal.dependentIds, onShowPrereqs: showPrereqs });
+  const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store, list, prereqIds: prereqModal.dependentIds, onShowPrereqs: showPrereqs });
   const graph = createGraph(document.getElementById('view-graph'), works, edges, { store });
   renderGuide(document.getElementById('view-guide'), works, edges, { store, list });
-  const watchlist = createWatchlist(document.getElementById('view-watchlist'), works, { store, list, sync });
+  const watchlist = createWatchlist(document.getElementById('view-watchlist'), works, { store, list, sync, prereqIds: prereqModal.dependentIds, onShowPrereqs: showPrereqs });
   applyRemote = () => {
     for (const card of document.querySelectorAll('.card[data-id]')) {
-      const watched = store.has(card.dataset.id);
-      const input = card.querySelector('.card__watched input');
-      const label = card.querySelector('.card__watched');
-      if (input) input.checked = watched;
-      if (label) label.classList.toggle('is-watched', watched);
-      card.classList.toggle('card--watched', watched);
+      applyWatchedState(card, store.has(card.dataset.id));
       card.classList.toggle('card--listed', list.has(card.dataset.id));
     }
     for (const work of works) graph.setWatched(work.id, store.has(work.id));
     watchlist.refresh();
-    sync.markDirty();
   };
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') sync.pull();
   });
 
   // 視聴済みの変更を、他のビューの同じ作品カードにも反映する
-  document.addEventListener('change', (event) => {
-    const input = event.target;
-    if (!(input instanceof HTMLInputElement) || !input.closest('.card__watched')) return;
-    const card = input.closest('.card');
-    if (!card) return;
-    const watched = store.has(card.dataset.id);
-    for (const other of document.querySelectorAll(`.card[data-id="${CSS.escape(card.dataset.id)}"]`)) {
-      const otherInput = other.querySelector('.card__watched input');
-      const otherLabel = other.querySelector('.card__watched');
-      if (otherInput) otherInput.checked = watched;
-      if (otherLabel) otherLabel.classList.toggle('is-watched', watched);
-      other.classList.toggle('card--watched', watched);
+  document.addEventListener('mcu:watched-change', (event) => {
+    const { id, watched } = event.detail;
+    for (const other of document.querySelectorAll(`.card[data-id="${CSS.escape(id)}"]`)) {
+      applyWatchedState(other, watched);
     }
-    graph.setWatched(card.dataset.id, watched);
+    graph.setWatched(id, watched);
     sync.markDirty();
   });
 

@@ -32,27 +32,50 @@ function posterBlock(work) {
   return poster;
 }
 
-function watchedToggle(work, store, onChange, card) {
-  const label = el('label', 'card__watched');
-  const input = document.createElement('input');
-  input.type = 'checkbox';
-  const usable = Boolean(store && store.available);
-  input.disabled = !usable;
-  input.checked = usable && store.has(work.id);
-  label.classList.toggle('is-watched', input.checked);
-  card.classList.toggle('card--watched', input.checked);
-  input.addEventListener('change', () => {
-    const now = store.toggle(work.id);
-    label.classList.toggle('is-watched', now);
-    card.classList.toggle('card--watched', now);
-    if (onChange) onChange(work, now);
-  });
-  label.append(input, el('span', null, ' 視聴済み'));
-  return label;
+/** 視聴済み状態をカード内のボタンとクラスに反映する。 */
+export function applyWatchedState(card, watched) {
+  const btn = card.querySelector('.card__watched');
+  if (btn) {
+    btn.textContent = watched ? '✓ 視聴済み' : '視聴済み';
+    btn.setAttribute('aria-pressed', String(watched));
+    btn.classList.toggle('is-watched', watched);
+  }
+  card.classList.toggle('card--watched', watched);
 }
 
-/** 作品カードを返す。compact は横長、thumb はポスター＋タイトルのみの小型、tapToggle はカード全体のタップで視聴済みを切り替える。 */
-export function renderCard(work, { store, list, onChange, compact = false, thumb = false, tapToggle = false, withSummary = !compact && !thumb } = {}) {
+function watchedButton(work, store, onChange, card) {
+  const btn = el('button', 'card__watched');
+  btn.type = 'button';
+  btn.disabled = !(store && store.available);
+  btn.addEventListener('click', (event) => {
+    event.stopPropagation(); // カード側のタップ動作（モーダル等）を起こさない
+    const watched = store.toggle(work.id);
+    applyWatchedState(card, watched);
+    btn.dispatchEvent(new CustomEvent('mcu:watched-change', { bubbles: true, detail: { id: work.id, watched } }));
+    if (onChange) onChange(work, watched);
+  });
+  return btn;
+}
+
+/** カード全体をボタン化する。視聴済みボタンのクリックは素通しする。 */
+export function makeTappable(card, action) {
+  card.classList.add('card--tappable');
+  card.setAttribute('role', 'button');
+  card.setAttribute('tabindex', '0');
+  card.addEventListener('click', (event) => {
+    if (event.target.closest('.card__watched')) return;
+    action();
+  });
+  card.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    if (event.target.closest('.card__watched')) return;
+    event.preventDefault();
+    action();
+  });
+}
+
+/** 作品カードを返す。compact は横長、thumb はポスター＋視聴済みボタンのみの小型表示。 */
+export function renderCard(work, { store, list, onChange, compact = false, thumb = false, withSummary = !compact && !thumb } = {}) {
   const card = el('article', `card${thumb ? ' card--thumb' : compact ? ' card--compact' : ''}`);
   card.dataset.id = work.id;
   card.dataset.phase = String(work.phase);
@@ -73,16 +96,9 @@ export function renderCard(work, { store, list, onChange, compact = false, thumb
     );
   }
   if (withSummary) body.append(el('p', 'card__summary', work.summary));
-  body.append(watchedToggle(work, store, onChange, card));
+  body.append(watchedButton(work, store, onChange, card));
 
   card.append(posterBlock(work), body);
-  if (tapToggle) {
-    card.classList.add('card--tappable');
-    card.addEventListener('click', (event) => {
-      if (event.target.closest('.card__watched')) return;
-      const input = card.querySelector('.card__watched input');
-      if (input && !input.disabled) input.click();
-    });
-  }
+  applyWatchedState(card, Boolean(store && store.available) && store.has(work.id));
   return card;
 }

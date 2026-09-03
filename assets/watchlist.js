@@ -1,4 +1,4 @@
-import { renderCard } from './card.js';
+import { renderCard, makeTappable } from './card.js';
 import { sortByRelease } from './data.js';
 
 /** リストに入っている作品だけを公開順で返す。 */
@@ -21,7 +21,7 @@ function button(label, onClick) {
 }
 
 /** ウォッチリストビュー。リストや同期状態の変更後は refresh() で再描画する。 */
-export function createWatchlist(container, works, { store, list, sync }) {
+export function createWatchlist(container, works, { store, list, sync, prereqIds, onShowPrereqs }) {
   container.classList.add('watchlist');
 
   function syncControls() {
@@ -70,7 +70,12 @@ export function createWatchlist(container, works, { store, list, sync }) {
       const ul = el('ul', 'watchlist__grid');
       for (const work of items) {
         const li = el('li', 'watchlist__cell');
-        li.append(renderCard(work, { store, list, thumb: true }));
+        const card = renderCard(work, { store, list, thumb: true });
+        if (onShowPrereqs && prereqIds?.has(work.id)) {
+          card.classList.add('card--expandable');
+          makeTappable(card, () => onShowPrereqs(work));
+        }
+        li.append(card);
         ul.append(li);
       }
       parts.push(ul);

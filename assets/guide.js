@@ -1,4 +1,4 @@
-import { renderCard } from './card.js';
+import { renderCard, makeTappable } from './card.js';
 import { ancestorsOf } from './graph-layout.js';
 import { displayTitle, sortByRelease } from './data.js';
 
@@ -64,23 +64,6 @@ function grid(cells) {
   const ul = el('ul', 'guide__grid');
   ul.append(...cells);
   return ul;
-}
-
-/** カード全体をボタン化する。視聴済みチェックのクリックは素通しする。 */
-function makeTappable(card, action) {
-  card.classList.add('card--tappable');
-  card.setAttribute('role', 'button');
-  card.setAttribute('tabindex', '0');
-  card.addEventListener('click', (event) => {
-    if (event.target.closest('.card__watched')) return;
-    action();
-  });
-  card.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    if (event.target.closest('.card__watched')) return;
-    event.preventDefault();
-    action();
-  });
 }
 
 export function renderGuide(container, works, edges, { store, list }) {
