@@ -58,3 +58,13 @@ test('createIdSetStore は指定キーで保存し、他のキーと混ざらな
   assert.deepEqual(JSON.parse(storage.dump()[STORAGE_KEY]), ['iron-man']);
   assert.equal(list.has('iron-man'), false);
 });
+
+test('reset は集合を丸ごと置き換えて保存する', () => {
+  const storage = fakeStorage();
+  const store = createIdSetStore(storage, 'k');
+  store.toggle('a');
+  store.reset(['x', 'y']);
+  assert.deepEqual(store.ids().sort(), ['x', 'y']);
+  assert.deepEqual(JSON.parse(storage.dump().k).sort(), ['x', 'y']);
+  assert.equal(store.has('a'), false);
+});

@@ -187,6 +187,24 @@ main { padding: 16px 20px 40px; }
 .watchlist__lead { margin: 0 0 12px; color: var(--muted); }
 .watchlist__grid { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; padding: 0; list-style: none; }
 .watchlist__cell .card { flex: 0 0 var(--thumb-w); width: var(--thumb-w); }
+.watchlist__sync {
+  margin-top: 28px; padding: 14px; max-width: 560px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+}
+.watchlist__sync-title { margin: 0 0 6px; font-size: 1rem; }
+.watchlist__sync-note { margin: 0 0 10px; font-size: 0.85rem; color: var(--muted); }
+.watchlist__sync-row { display: flex; gap: 8px; }
+.watchlist__sync-code {
+  flex: 1; min-width: 0; padding: 6px 10px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface-2); color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.85rem;
+}
+.watchlist__sync button {
+  padding: 6px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+}
+.watchlist__sync > button { margin-bottom: 8px; }
 
 /* スマホ */
 @media (max-width: 600px) {

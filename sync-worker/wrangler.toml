@@ -1,0 +1,9 @@
+name = "mcu-sync"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# デプロイ前に `npx wrangler kv namespace create SYNC` を実行し、
+# 出力された id で下の REPLACE_AFTER_CREATE を置き換える
+[[kv_namespaces]]
+binding = "SYNC"
+id = "REPLACE_AFTER_CREATE"

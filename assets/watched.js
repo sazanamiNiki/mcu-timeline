@@ -49,6 +49,10 @@ export function createIdSetStore(storage, key) {
       persist();
       return ids.has(id);
     },
+    reset(nextIds) {
+      ids = new Set([...nextIds].filter((x) => typeof x === 'string'));
+      persist();
+    },
     ids: () => [...ids],
   };
 }

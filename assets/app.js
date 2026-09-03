@@ -4,6 +4,7 @@ import { createTimeline } from './timeline.js';
 import { createGraph } from './graph.js';
 import { renderGuide } from './guide.js';
 import { createWatchlist } from './watchlist.js';
+import { createSync, SYNC_ENDPOINT } from './sync.js';
 
 export const TABS = ['release', 'story', 'graph', 'guide', 'watchlist'];
 
@@ -49,6 +50,20 @@ async function init() {
   const { works, edges } = mergeSeasons(includedWorks(data), deps.edges);
   const store = createWatchedStore(storageOrNull());
   const list = createIdSetStore(storageOrNull(), WATCHLIST_KEY);
+  let applyRemote = () => {};
+  const sync = createSync({
+    storage: storageOrNull(),
+    store,
+    list,
+    endpoint: globalThis.MCU_SYNC_ENDPOINT ?? SYNC_ENDPOINT, // ローカル検証用の上書き口
+    onApply: () => applyRemote(),
+  });
+  if (location.hash.startsWith('#sync=')) {
+    await sync.join(decodeURIComponent(location.hash.slice('#sync='.length)));
+    history.replaceState(null, '', '#watchlist');
+  } else {
+    await sync.pull();
+  }
   document.getElementById('updated').textContent = data.meta.generated;
   if (!store.available) showStatus('このブラウザでは視聴済みを保存できません');
 
@@ -56,7 +71,24 @@ async function init() {
   const story = createTimeline(document.getElementById('view-story'), works, { mode: 'story', store, list });
   const graph = createGraph(document.getElementById('view-graph'), works, edges, { store });
   renderGuide(document.getElementById('view-guide'), works, edges, { store, list });
-  const watchlist = createWatchlist(document.getElementById('view-watchlist'), works, { store, list });
+  const watchlist = createWatchlist(document.getElementById('view-watchlist'), works, { store, list, sync });
+  applyRemote = () => {
+    for (const card of document.querySelectorAll('.card[data-id]')) {
+      const watched = store.has(card.dataset.id);
+      const input = card.querySelector('.card__watched input');
+      const label = card.querySelector('.card__watched');
+      if (input) input.checked = watched;
+      if (label) label.classList.toggle('is-watched', watched);
+      card.classList.toggle('card--watched', watched);
+      card.classList.toggle('card--listed', list.has(card.dataset.id));
+    }
+    for (const work of works) graph.setWatched(work.id, store.has(work.id));
+    watchlist.refresh();
+    sync.markDirty();
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') sync.pull();
+  });
 
   // 視聴済みの変更を、他のビューの同じ作品カードにも反映する
   document.addEventListener('change', (event) => {
@@ -73,6 +105,7 @@ async function init() {
       other.classList.toggle('card--watched', watched);
     }
     graph.setWatched(card.dataset.id, watched);
+    sync.markDirty();
   });
 
   // ウォッチリスト: カードの右クリック（スマホは長押し）で追加・削除をトグルする
