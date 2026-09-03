@@ -26,7 +26,8 @@ export function createPrereqModal(works, edges, { store, list }) {
 
   function render() {
     const work = trail[trail.length - 1];
-    const head = el('div', 'prereq-modal__head');
+    dialog.setAttribute('aria-label', `『${displayTitle(work)}』の先に観る作品`);
+    const bar = el('div', 'prereq-modal__bar');
     if (trail.length > 1) {
       const back = el('button', 'prereq-modal__back', '← 戻る');
       back.type = 'button';
@@ -34,14 +35,15 @@ export function createPrereqModal(works, edges, { store, list }) {
         trail.pop();
         render();
       });
-      head.append(back);
+      bar.append(back);
     }
     const close = el('button', 'prereq-modal__close', '×');
     close.type = 'button';
     close.setAttribute('aria-label', '閉じる');
     close.addEventListener('click', () => dialog.close());
-    head.append(el('h2', 'prereq-modal__title', `『${displayTitle(work)}』の先に観る作品`), close);
-    const summary = work.summary ? el('p', 'prereq-modal__summary', work.summary) : null;
+    bar.append(close);
+
+    const current = renderCard(work, { store, list, compact: true, withSummary: true });
 
     const strip = el('ol', 'strip prereq-modal__strip');
     for (const prereq of rolledPrerequisites(work.id, works, edges)) {
@@ -56,7 +58,7 @@ export function createPrereqModal(works, edges, { store, list }) {
       li.append(card);
       strip.append(li);
     }
-    dialog.replaceChildren(...[head, summary, strip].filter(Boolean));
+    dialog.replaceChildren(bar, current, el('h3', 'prereq-modal__subtitle', '先に観る作品'), strip);
   }
 
   return {
